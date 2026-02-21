@@ -1,7 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { generatePuzzle } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Settings } from "lucide-react";
+import {
+  Button,
+  DialogTrigger,
+  Popover,
+  Dialog,
+  RadioGroup,
+  Radio,
+  Switch,
+} from "react-aria-components";
 
 type Theme = "light" | "dark";
 
@@ -24,6 +33,8 @@ function useTheme() {
 
   return { theme, toggle };
 }
+
+const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"];
 
 function App() {
   const { theme, toggle: toggleTheme } = useTheme();
@@ -51,7 +62,7 @@ function App() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* ── Header ─────────────────────────────────────────────── */}
-      <header className="flex w-full items-center justify-between border-b border-border-primary bg-container px-6 py-3">
+      <header className="flex w-full items-center justify-between border-b border-border-primary bg-container px-4 py-3 sm:px-6">
         <h1 className="text-lg font-semibold tracking-tight text-text-primary">
           Sudoku
         </h1>
@@ -67,17 +78,7 @@ function App() {
       {/* ── Main Content ───────────────────────────────────────── */}
       <main className="flex flex-1 flex-col items-center px-4 py-8 md:py-12">
         {/* Controls */}
-        <div className="mb-6 flex flex-wrap items-center justify-center gap-2">
-          <select
-            value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-            disabled={generating}
-            className="cursor-pointer rounded-md border border-border-primary bg-elevated px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:border-border-strong hover:bg-hover disabled:cursor-not-allowed disabled:opacity-35"
-          >
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-          </select>
+        <div className="mb-6 flex items-center justify-center gap-2">
           <button
             onClick={handleGenerate}
             disabled={generating}
@@ -85,14 +86,62 @@ function App() {
           >
             {generating ? "Generating…" : "Generate Puzzle"}
           </button>
-          {puzzleGrid && (
-            <button
-              onClick={() => setShowSolution((s) => !s)}
-              className="cursor-pointer rounded-md border border-border-primary bg-elevated px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:border-border-strong hover:bg-hover active:bg-active"
+
+          {/* Settings Popover */}
+          <DialogTrigger>
+            <Button
+              aria-label="Settings"
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
-              {showSolution ? "Hide Solution" : "Show Solution"}
-            </button>
-          )}
+              <Settings size={18} />
+            </Button>
+            <Popover
+              placement="bottom end"
+              className="w-64 rounded-lg border border-border-primary bg-container shadow-lg outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95"
+            >
+              <Dialog className="p-4 outline-none">
+                <div className="space-y-4">
+                  {/* Difficulty */}
+                  <div>
+                    <span className="mb-2 block text-xs font-medium uppercase tracking-wide text-text-secondary">
+                      Difficulty
+                    </span>
+                    <RadioGroup
+                      aria-label="Difficulty"
+                      value={difficulty}
+                      onChange={(val) => setDifficulty(val as Difficulty)}
+                      className="flex gap-1"
+                    >
+                      {DIFFICULTIES.map((d) => (
+                        <Radio
+                          key={d}
+                          value={d}
+                          className="flex-1 cursor-pointer rounded-md border border-border-primary px-3 py-1.5 text-center text-sm font-medium capitalize text-text-primary transition-colors selected:border-accent selected:bg-accent selected:text-white hover:bg-hover"
+                        >
+                          {d}
+                        </Radio>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
+                  {/* Show Answer */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-text-primary">
+                      Show Answer
+                    </span>
+                    <Switch
+                      isSelected={showSolution}
+                      onChange={setShowSolution}
+                      isDisabled={!puzzleGrid}
+                      className="group flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border border-border-primary bg-active p-0.5 transition-colors selected:bg-accent disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      <span className="block h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 group-selected:translate-x-4" />
+                    </Switch>
+                  </div>
+                </div>
+              </Dialog>
+            </Popover>
+          </DialogTrigger>
         </div>
 
         {/* Grid */}
