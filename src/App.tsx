@@ -43,6 +43,7 @@ function App() {
   const [showSolution, setShowSolution] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   function handleGenerate() {
     setGenerating(true);
@@ -76,7 +77,7 @@ function App() {
       </header>
 
       {/* ── Main Content ───────────────────────────────────────── */}
-      <main className="flex flex-1 flex-col items-center px-4 py-8 md:py-12">
+      <main className="flex flex-1 flex-col items-center justify-center px-4 py-8 md:py-12">
         {/* Controls */}
         <div className="mb-6 flex items-center justify-center gap-2">
           <button
@@ -88,10 +89,11 @@ function App() {
           </button>
 
           {/* Settings Popover */}
-          <DialogTrigger>
+          <DialogTrigger isOpen={settingsOpen} onOpenChange={setSettingsOpen}>
             <Button
               aria-label="Settings"
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              isDisabled={!puzzleGrid}
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-35"
             >
               <Settings size={18} />
             </Button>
@@ -116,7 +118,7 @@ function App() {
                         <Radio
                           key={d}
                           value={d}
-                          className="flex-1 cursor-pointer rounded-md border border-border-primary px-3 py-1.5 text-center text-sm font-medium capitalize text-text-primary transition-colors selected:border-accent selected:bg-accent selected:text-white hover:bg-hover"
+                          className="flex-1 cursor-pointer rounded-md border border-border-primary px-3 py-1.5 text-center text-sm font-medium capitalize text-text-primary transition-colors data-[selected]:border-accent data-[selected]:bg-accent data-[selected]:text-white hover:bg-hover"
                         >
                           {d}
                         </Radio>
@@ -131,11 +133,14 @@ function App() {
                     </span>
                     <Switch
                       isSelected={showSolution}
-                      onChange={setShowSolution}
+                      onChange={(val) => {
+                        setShowSolution(val);
+                        setSettingsOpen(false);
+                      }}
                       isDisabled={!puzzleGrid}
-                      className="group flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border border-border-primary bg-active p-0.5 transition-colors selected:bg-accent disabled:cursor-not-allowed disabled:opacity-35"
+                      className="group flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border border-border-primary bg-active p-0.5 transition-colors data-[selected]:bg-accent disabled:cursor-not-allowed disabled:opacity-35"
                     >
-                      <span className="block h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 group-selected:translate-x-4" />
+                      <span className="block h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 group-data-[selected]:translate-x-4" />
                     </Switch>
                   </div>
                 </div>
