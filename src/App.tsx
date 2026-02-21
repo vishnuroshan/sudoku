@@ -9,7 +9,7 @@ import {
   Settings,
   Eraser,
   PartyPopper,
-  RotateCcw,
+  // RotateCcw,
   Eye,
   Gauge,
 } from "lucide-react";
@@ -227,6 +227,9 @@ function App() {
       ? getConflicts(displayGrid, puzzleGrid)
       : new Set<string>();
 
+  // Shake animation: track cells that just entered conflict state
+  const [shakingCells, setShakingCells] = useState<Set<string>>(new Set());
+
   // Win detection: grid is full, no conflicts, matches solution
   const isWon = (() => {
     if (!displayGrid || !solvedGrid || showSolution) return false;
@@ -254,11 +257,37 @@ function App() {
     if (!selectedCell || !puzzleGrid) return;
     const [r, c] = selectedCell;
     if (isGivenCell(r, c)) return;
+
+    // Compute the next merged grid to detect newly introduced conflicts
+    const nextUserGrid = cloneGrid(userGrid);
+    nextUserGrid[r][c] = n;
+    const nextMerged = cloneGrid(puzzleGrid);
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 9; col++) {
+        if (puzzleGrid[row][col] === 0 && nextUserGrid[row][col] !== 0) {
+          nextMerged[row][col] = nextUserGrid[row][col];
+        }
+      }
+    }
+    const nextConflicts = getConflicts(nextMerged, puzzleGrid);
+    const newConflictKeys = [...nextConflicts].filter((k) => !conflicts.has(k));
+
     setUserGrid((prev) => {
       const next = cloneGrid(prev);
       next[r][c] = n;
       return next;
     });
+
+    if (newConflictKeys.length > 0) {
+      setShakingCells((prev) => new Set([...prev, ...newConflictKeys]));
+      setTimeout(() => {
+        setShakingCells((prev) => {
+          const next = new Set(prev);
+          newConflictKeys.forEach((k) => next.delete(k));
+          return next;
+        });
+      }, 350);
+    }
   }
 
   function eraseCell() {
@@ -409,7 +438,7 @@ function App() {
                         <Radio
                           key={d}
                           value={d}
-                          className="flex-1 cursor-pointer rounded-md border border-border-primary px-3 py-1.5 text-center text-sm font-medium capitalize text-text-primary transition-colors data-[selected]:border-accent data-[selected]:bg-accent data-[selected]:text-white hover:bg-hover"
+                          className="flex-1 cursor-pointer rounded-md border border-border-primary px-3 py-1.5 text-center text-sm font-medium capitalize text-text-primary transition-colors data-selected:border-accent data-selected:bg-accent data-selected:text-white hover:bg-hover"
                         >
                           {d}
                         </Radio>
@@ -429,9 +458,9 @@ function App() {
                         setSettingsOpen(false);
                       }}
                       isDisabled={!puzzleGrid || generating}
-                      className="group flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border border-border-primary bg-active p-0.5 transition-colors data-[selected]:bg-accent disabled:cursor-not-allowed disabled:opacity-35"
+                      className="group flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border border-border-primary bg-active p-0.5 transition-colors data-selected:bg-accent disabled:cursor-not-allowed disabled:opacity-35"
                     >
-                      <span className="block h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 group-data-[selected]:translate-x-4" />
+                      <span className="block h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 group-data-selected:translate-x-4" />
                     </Switch>
                   </div>
                 </div>
@@ -481,15 +510,16 @@ function App() {
                           w-10 h-10 text-[1.05rem]
                           min-[390px]:w-11 min-[390px]:h-11 min-[390px]:text-[1.2rem]
                           min-[480px]:w-12 min-[480px]:h-12 min-[480px]:text-[1.25rem]
-                          md:w-[54px] md:h-[54px] md:text-[1.35rem]
-                          lg:w-[60px] lg:h-[60px] lg:text-2xl
-                          min-[1440px]:w-[68px] min-[1440px]:h-[68px] min-[1440px]:text-[1.65rem]
-                          min-[1920px]:w-[76px] min-[1920px]:h-[76px] min-[1920px]:text-[1.8rem]
+                          md:w-13.5 md:h-13.5 md:text-[1.35rem]
+                          lg:w-15 lg:h-15 lg:text-2xl
+                          min-[1440px]:w-17 min-[1440px]:h-17 min-[1440px]:text-[1.65rem]
+                          min-[1920px]:w-19 min-[1920px]:h-19 min-[1920px]:text-[1.8rem]
                           ${c % 3 === 0 ? "border-l-2 border-l-border-strong" : ""}
                           ${r % 3 === 0 ? "border-t-2 border-t-border-strong" : ""}
                           ${c === 8 ? "border-r-2 border-r-border-strong" : ""}
                           ${r === 8 ? "border-b-2 border-b-border-strong" : ""}
                           ${highlight}
+                          ${shakingCells.has(`${r},${c}`) ? "animate-shake" : ""}
                           ${hasConflict && isUserEntry ? "text-error" : isGiven ? "text-clue" : isUserEntry ? "text-solution" : "text-text-tertiary"}
                         `}
                         >
@@ -517,13 +547,13 @@ function App() {
               >
                 <Eraser size={18} />
               </Button>
-              <Button
+              {/* <Button
                 aria-label="Undo"
                 isDisabled
                 className="flex h-10 w-10 min-[390px]:h-11 min-[390px]:w-11 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
               >
                 <RotateCcw size={18} />
-              </Button>
+              </Button> */}
             </div>
 
             {/* ── Numpad ─────────────────────────────────────────── */}
