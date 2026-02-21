@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { generateFullGrid, createPuzzle, cloneGrid } from "./sudoku";
-import type { Grid } from "./sudoku";
+import type { Grid, Difficulty } from "./sudoku";
 import "./App.css";
 
 function App() {
@@ -9,6 +9,7 @@ function App() {
   const [showSolution, setShowSolution] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [difficulty, setDifficulty] = useState<Difficulty>("medium");
 
   const logPanelRef = useRef<HTMLDivElement>(null);
 
@@ -32,7 +33,7 @@ function App() {
       const solved = generateFullGrid(log);
 
       log("=== Creating puzzle (removing cells) ===");
-      const puzzle = createPuzzle(solved, log);
+      const puzzle = createPuzzle(solved, difficulty, log);
 
       setSolvedGrid(cloneGrid(solved));
       setPuzzleGrid(puzzle);
@@ -49,62 +50,76 @@ function App() {
     <div className="app">
       <h1>Sudoku Generator</h1>
 
-      <div className="controls">
-        <button onClick={handleGenerate} disabled={generating}>
-          {generating ? "Generating…" : "Generate Puzzle"}
-        </button>
-        {puzzleGrid && (
-          <button onClick={() => setShowSolution((s) => !s)}>
-            {showSolution ? "Hide Solution" : "Show Solution"}
-          </button>
-        )}
-      </div>
-
-      {displayGrid && (
-        <table className="sudoku-grid">
-          <tbody>
-            {displayGrid.map((row, r) => (
-              <tr key={r}>
-                {row.map((cell, c) => {
-                  const isGiven = puzzleGrid !== null && puzzleGrid[r][c] !== 0;
-                  const isEmpty = cell === 0;
-                  return (
-                    <td
-                      key={c}
-                      className={[
-                        "cell",
-                        // Thicker borders to delineate 3×3 boxes.
-                        c % 3 === 0 ? "border-left" : "",
-                        r % 3 === 0 ? "border-top" : "",
-                        c === 8 ? "border-right" : "",
-                        r === 8 ? "border-bottom" : "",
-                        // Given cells → blue; solved cells → dark orange.
-                        isGiven ? "given-cell" : "",
-                        !isGiven && !isEmpty ? "solved-cell" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      {isEmpty ? "" : cell}
-                    </td>
-                  );
-                })}
-              </tr>
+      <div className="main-layout">
+        {/* Left: log panel */}
+        {logs.length > 0 && (
+          <div className="log-panel" ref={logPanelRef}>
+            <h3>Generation Log</h3>
+            {logs.map((entry, i) => (
+              <div key={i} className="log-entry">
+                {entry}
+              </div>
             ))}
-          </tbody>
-        </table>
-      )}
+          </div>
+        )}
 
-      {logs.length > 0 && (
-        <div className="log-panel" ref={logPanelRef}>
-          <h3>Generation Log</h3>
-          {logs.map((entry, i) => (
-            <div key={i} className="log-entry">
-              {entry}
-            </div>
-          ))}
+        {/* Right: controls + puzzle */}
+        <div className="puzzle-section">
+          <div className="controls">
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+              disabled={generating}
+            >
+              <option value="easy">Easy (27–32 clues)</option>
+              <option value="medium">Medium (25–27 clues)</option>
+              <option value="hard">Hard (17–19 clues)</option>
+            </select>
+            <button onClick={handleGenerate} disabled={generating}>
+              {generating ? "Generating…" : "Generate Puzzle"}
+            </button>
+            {puzzleGrid && (
+              <button onClick={() => setShowSolution((s) => !s)}>
+                {showSolution ? "Hide Solution" : "Show Solution"}
+              </button>
+            )}
+          </div>
+
+          {displayGrid && (
+            <table className="sudoku-grid">
+              <tbody>
+                {displayGrid.map((row, r) => (
+                  <tr key={r}>
+                    {row.map((cell, c) => {
+                      const isGiven =
+                        puzzleGrid !== null && puzzleGrid[r][c] !== 0;
+                      const isEmpty = cell === 0;
+                      return (
+                        <td
+                          key={c}
+                          className={[
+                            "cell",
+                            c % 3 === 0 ? "border-left" : "",
+                            r % 3 === 0 ? "border-top" : "",
+                            c === 8 ? "border-right" : "",
+                            r === 8 ? "border-bottom" : "",
+                            isGiven ? "given-cell" : "",
+                            !isGiven && !isEmpty ? "solved-cell" : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                        >
+                          {isEmpty ? "" : cell}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

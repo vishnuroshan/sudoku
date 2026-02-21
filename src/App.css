@@ -1,10 +1,9 @@
 /* ─── Layout ────────────────────────────────────────────────────────────── */
 
 .app {
-  max-width: 700px;
-  margin: 0 auto;
+  width: 100%;
   padding: 2rem;
-  text-align: center;
+  box-sizing: border-box;
   font-family:
     system-ui,
     -apple-system,
@@ -12,7 +11,21 @@
 }
 
 h1 {
-  margin-bottom: 1rem;
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+/* Two-column layout: logs left, puzzle right */
+.main-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.puzzle-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* ─── Buttons ───────────────────────────────────────────────────────────── */
@@ -44,19 +57,33 @@ h1 {
   cursor: not-allowed;
 }
 
+.controls select {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #1a1a1a;
+  color: #eee;
+  cursor: pointer;
+}
+
+.controls select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ─── Sudoku Grid ───────────────────────────────────────────────────────── */
 
 .sudoku-grid {
   border-collapse: collapse;
-  margin: 0 auto 1.5rem;
 }
 
 .cell {
-  width: 44px;
-  height: 44px;
+  width: 56px;
+  height: 56px;
   text-align: center;
   vertical-align: middle;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-weight: 600;
   border: 1px solid #444;
   color: #eee;
@@ -89,14 +116,15 @@ h1 {
 /* ─── Log Panel ─────────────────────────────────────────────────────────── */
 
 .log-panel {
-  max-height: 250px;
+  flex: 1;
+  min-width: 0;
+  max-height: 560px;
   overflow-y: auto;
   text-align: left;
   background: #111;
   border: 1px solid #333;
   border-radius: 4px;
   padding: 0.75rem 1rem;
-  margin-top: 1rem;
   font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
   font-size: 0.75rem;
   line-height: 1.5;

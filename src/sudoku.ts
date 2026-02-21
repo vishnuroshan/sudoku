@@ -4,6 +4,18 @@ import { shuffle } from "lodash-es";
 // Grid is a 9x9 2D array. 0 means empty cell.
 export type Grid = number[][];
 
+export type Difficulty = "easy" | "medium" | "hard";
+
+// How many clues (filled cells) to leave for each difficulty.
+export const DIFFICULTY_CLUES: Record<
+  Difficulty,
+  { min: number; max: number }
+> = {
+  easy: { min: 27, max: 32 },
+  medium: { min: 25, max: 27 },
+  hard: { min: 17, max: 19 },
+};
+
 // Log callback — used to stream generation/solver events to the UI.
 type LogFn = (message: string) => void;
 
@@ -168,17 +180,31 @@ export function generateFullGrid(log: LogFn): Grid {
 /**
  * Create a puzzle from a solved grid by removing numbers one at a time.
  *
+ * The number of clues to keep is determined by the chosen difficulty level.
  * We iterate through a shuffled list of all 81 cells and attempt to
  * remove each one. After removal we check whether the puzzle still has
  * exactly one solution — if not, we put the number back (revert).
  *
  * Guarantees:
  *  • The puzzle always has exactly ONE unique solution.
- *  • At least 17 clues remain (the theoretical minimum for a valid puzzle).
- *    In practice the uniqueness constraint usually leaves ~25–35 clues.
+ *  • Clue count stays within the range defined by the difficulty.
  */
-export function createPuzzle(solvedGrid: Grid, log: LogFn): Grid {
+export function createPuzzle(
+  solvedGrid: Grid,
+  difficulty: Difficulty,
+  log: LogFn,
+): Grid {
   const puzzle = cloneGrid(solvedGrid);
+  const { min: minClues, max: maxClues } = DIFFICULTY_CLUES[difficulty];
+
+  // Pick a random target clue count within the difficulty range.
+  const targetClues =
+    minClues + Math.floor(Math.random() * (maxClues - minClues + 1));
+  const maxRemovals = 81 - targetClues;
+
+  log(
+    `Difficulty: ${difficulty} — targeting ${targetClues} clues (removing up to ${maxRemovals})`,
+  );
 
   // Build a shuffled list of all 81 cell positions.
   const positions: [number, number][] = [];
@@ -189,8 +215,6 @@ export function createPuzzle(solvedGrid: Grid, log: LogFn): Grid {
   }
   const shuffledPositions = shuffle(positions);
 
-  // Maximum cells we're allowed to remove (81 − 17 = 64).
-  const maxRemovals = 64;
   let removed = 0;
 
   for (const [row, col] of shuffledPositions) {
