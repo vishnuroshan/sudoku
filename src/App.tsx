@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { generatePuzzle } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
-import { Sun, Moon, Settings } from "lucide-react";
+import { Sun, Moon, Settings, Eraser, Undo2 } from "lucide-react";
 import {
   Button,
   DialogTrigger,
@@ -10,6 +10,7 @@ import {
   RadioGroup,
   Radio,
   Switch,
+  Group,
 } from "react-aria-components";
 
 type Theme = "light" | "dark";
@@ -36,10 +37,19 @@ function useTheme() {
 
 const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"];
 
+function createEmptyGrid(): Grid {
+  return Array.from({ length: 9 }, () => Array(9).fill(0));
+}
+
+function cloneGrid(g: Grid): Grid {
+  return g.map((row) => [...row]);
+}
+
 function App() {
   const { theme, toggle: toggleTheme } = useTheme();
   const [solvedGrid, setSolvedGrid] = useState<Grid | null>(null);
   const [puzzleGrid, setPuzzleGrid] = useState<Grid | null>(null);
+  const [userGrid, setUserGrid] = useState<Grid>(createEmptyGrid());
   const [showSolution, setShowSolution] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
@@ -53,6 +63,7 @@ function App() {
     setGenerating(true);
     setShowSolution(false);
     setSelectedCell(null);
+    setUserGrid(createEmptyGrid());
 
     setTimeout(() => {
       const { solved, puzzle } = generatePuzzle(difficulty);
@@ -62,8 +73,46 @@ function App() {
     }, 50);
   }
 
-  const displayGrid: Grid | null =
-    showSolution && solvedGrid ? solvedGrid : puzzleGrid;
+  // Build the display grid: givens from puzzle, user entries on top
+  const displayGrid: Grid | null = (() => {
+    if (showSolution && solvedGrid) return solvedGrid;
+    if (!puzzleGrid) return null;
+    const merged = cloneGrid(puzzleGrid);
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (puzzleGrid[r][c] === 0 && userGrid[r][c] !== 0) {
+          merged[r][c] = userGrid[r][c];
+        }
+      }
+    }
+    return merged;
+  })();
+
+  function isGivenCell(r: number, c: number): boolean {
+    return puzzleGrid !== null && puzzleGrid[r][c] !== 0;
+  }
+
+  function enterNumber(n: number) {
+    if (!selectedCell || !puzzleGrid) return;
+    const [r, c] = selectedCell;
+    if (isGivenCell(r, c)) return;
+    setUserGrid((prev) => {
+      const next = cloneGrid(prev);
+      next[r][c] = n;
+      return next;
+    });
+  }
+
+  function eraseCell() {
+    if (!selectedCell || !puzzleGrid) return;
+    const [r, c] = selectedCell;
+    if (isGivenCell(r, c)) return;
+    setUserGrid((prev) => {
+      const next = cloneGrid(prev);
+      next[r][c] = 0;
+      return next;
+    });
+  }
 
   function handleCellClick(r: number, c: number) {
     setSelectedCell([r, c]);
@@ -92,8 +141,19 @@ function App() {
       case "Escape":
         setSelectedCell(null);
         return;
-      default:
+      case "Backspace":
+      case "Delete":
+        e.preventDefault();
+        eraseCell();
         return;
+      default: {
+        const num = parseInt(e.key, 10);
+        if (num >= 1 && num <= 9) {
+          e.preventDefault();
+          enterNumber(num);
+        }
+        return;
+      }
     }
     e.preventDefault();
     setSelectedCell([nr, nc]);
@@ -211,27 +271,28 @@ function App() {
           </DialogTrigger>
         </div>
 
-        {/* Grid */}
+        {/* Grid + Controls */}
         {displayGrid && (
-          <table
-            ref={gridRef}
-            tabIndex={0}
-            onKeyDown={handleGridKeyDown}
-            className="border-collapse bg-container outline-none"
-          >
-            <tbody>
-              {displayGrid.map((row, r) => (
-                <tr key={r}>
-                  {row.map((cell, c) => {
-                    const isGiven =
-                      puzzleGrid !== null && puzzleGrid[r][c] !== 0;
-                    const isEmpty = cell === 0;
-                    const highlight = getCellHighlight(r, c);
-                    return (
-                      <td
-                        key={c}
-                        onClick={() => handleCellClick(r, c)}
-                        className={`text-center align-middle font-semibold tabular-nums border border-border-primary cursor-pointer select-none transition-colors duration-75
+          <div className="flex flex-col items-center">
+            <table
+              ref={gridRef}
+              tabIndex={0}
+              onKeyDown={handleGridKeyDown}
+              className="border-collapse bg-container outline-none"
+            >
+              <tbody>
+                {displayGrid.map((row, r) => (
+                  <tr key={r}>
+                    {row.map((cell, c) => {
+                      const isGiven = isGivenCell(r, c);
+                      const isEmpty = cell === 0;
+                      const isUserEntry = !isGiven && userGrid[r][c] !== 0;
+                      const highlight = getCellHighlight(r, c);
+                      return (
+                        <td
+                          key={c}
+                          onClick={() => handleCellClick(r, c)}
+                          className={`text-center align-middle font-semibold tabular-nums border border-border-primary cursor-pointer select-none transition-colors duration-75
                           w-10 h-10 text-[1.05rem]
                           min-[480px]:w-12 min-[480px]:h-12 min-[480px]:text-[1.2rem]
                           md:w-[54px] md:h-[54px] md:text-[1.35rem]
@@ -243,17 +304,69 @@ function App() {
                           ${c === 8 ? "border-r-2 border-r-border-strong" : ""}
                           ${r === 8 ? "border-b-2 border-b-border-strong" : ""}
                           ${highlight}
-                          ${isGiven ? "text-clue" : !isEmpty ? "text-solution" : "text-text-tertiary"}
+                          ${isGiven ? "text-clue" : isUserEntry ? "text-solution" : "text-text-tertiary"}
                         `}
-                      >
-                        {isEmpty ? "" : cell}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        >
+                          {isEmpty ? "" : cell}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* ── Tool row: Erase + Undo ─────────────────────────── */}
+            <div className="mt-2 flex w-full gap-1">
+              <Button
+                aria-label="Erase"
+                onPress={eraseCell}
+                isDisabled={
+                  !selectedCell ||
+                  (selectedCell &&
+                    isGivenCell(selectedCell[0], selectedCell[1]))
+                }
+                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-border-primary bg-elevated py-2 text-sm font-medium text-text-primary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                <Eraser size={16} />
+                Erase
+              </Button>
+              <Button
+                aria-label="Undo"
+                isDisabled
+                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-border-primary bg-elevated py-2 text-sm font-medium text-text-primary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                <Undo2 size={16} />
+                Undo
+              </Button>
+            </div>
+
+            {/* ── Numpad ─────────────────────────────────────────── */}
+            <Group aria-label="Number pad" className="mt-1 flex w-full gap-1">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
+                // Count how many times this number appears in the display grid
+                const count = displayGrid
+                  ? displayGrid.flat().filter((v) => v === n).length
+                  : 0;
+                const isComplete = count >= 9;
+                return (
+                  <Button
+                    key={n}
+                    aria-label={`${n}`}
+                    onPress={() => enterNumber(n)}
+                    isDisabled={!selectedCell || isComplete}
+                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-md border py-2.5 text-base font-semibold tabular-nums outline-none transition-colors
+                    hover:border-border-strong hover:bg-hover active:bg-active
+                    disabled:cursor-not-allowed disabled:opacity-35
+                    ${isComplete ? "border-border-primary bg-active text-text-tertiary" : "border-border-primary bg-elevated text-text-primary"}
+                  `}
+                  >
+                    {n}
+                  </Button>
+                );
+              })}
+            </Group>
+          </div>
         )}
       </main>
     </div>
