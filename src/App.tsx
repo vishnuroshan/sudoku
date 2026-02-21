@@ -3,7 +3,14 @@ import useLocalStorageState from "use-local-storage-state";
 import { openDB } from "idb";
 import { generatePuzzle } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
-import { Sun, Moon, Settings, Eraser, Undo2, PartyPopper } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  Settings,
+  Eraser,
+  PartyPopper,
+  RotateCcw,
+} from "lucide-react";
 import {
   Button,
   DialogTrigger,
@@ -13,6 +20,9 @@ import {
   Radio,
   Switch,
   Group,
+  Modal,
+  ModalOverlay,
+  Heading,
 } from "react-aria-components";
 
 type Theme = "light" | "dark";
@@ -479,18 +489,16 @@ function App() {
                   (selectedCell &&
                     isGivenCell(selectedCell[0], selectedCell[1]))
                 }
-                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-border-primary bg-elevated py-2 text-sm font-medium text-text-primary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <Eraser size={16} />
-                Erase
+                <Eraser size={18} />
               </Button>
               <Button
                 aria-label="Undo"
                 isDisabled
-                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-border-primary bg-elevated py-2 text-sm font-medium text-text-primary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <Undo2 size={16} />
-                Undo
+                <RotateCcw size={18} />
               </Button>
             </div>
 
@@ -508,7 +516,8 @@ function App() {
                     aria-label={`${n}`}
                     onPress={() => enterNumber(n)}
                     isDisabled={!selectedCell || isComplete}
-                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-md border py-2.5 text-base font-semibold tabular-nums outline-none transition-colors
+                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-md border py-3 text-lg font-semibold tabular-nums outline-none transition-colors
+                    min-[480px]:py-3.5 min-[480px]:text-xl
                     hover:border-border-strong hover:bg-hover active:bg-active
                     disabled:cursor-not-allowed disabled:opacity-35
                     ${isComplete ? "border-border-primary bg-active text-text-tertiary" : "border-border-primary bg-elevated text-text-primary"}
@@ -522,15 +531,35 @@ function App() {
           </div>
         )}
 
-        {/* ── Win message ─────────────────────────────────────── */}
-        {isWon && (
-          <div className="mt-6 flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-5 py-3 text-success">
-            <PartyPopper size={20} />
-            <span className="text-sm font-semibold">
-              Congratulations! Puzzle solved!
-            </span>
-          </div>
-        )}
+        {/* ── Win Dialog ─────────────────────────────────────── */}
+        <ModalOverlay
+          isOpen={isWon}
+          isDismissable
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm entering:animate-in entering:fade-in exiting:animate-out exiting:fade-out"
+        >
+          <Modal className="mx-4 w-full max-w-sm rounded-xl border border-border-primary bg-container p-6 shadow-xl outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95">
+            <Dialog className="outline-none">
+              <div className="flex flex-col items-center gap-4 text-center">
+                <PartyPopper size={40} className="text-success" />
+                <Heading
+                  slot="title"
+                  className="text-lg font-semibold text-text-primary"
+                >
+                  Puzzle Solved!
+                </Heading>
+                <p className="text-sm text-text-secondary">
+                  Congratulations! You completed the puzzle.
+                </p>
+                <Button
+                  onPress={handleGenerate}
+                  className="mt-2 w-full cursor-pointer rounded-md border border-accent bg-accent px-4 py-2.5 text-sm font-medium text-white outline-none transition-colors hover:bg-accent-hover active:bg-accent"
+                >
+                  New Puzzle
+                </Button>
+              </div>
+            </Dialog>
+          </Modal>
+        </ModalOverlay>
       </main>
     </div>
   );
