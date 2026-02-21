@@ -349,7 +349,7 @@ function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-dvh flex-col overflow-hidden">
       {/* ── Header ─────────────────────────────────────────────── */}
       <header className="flex w-full items-center justify-between border-b border-border-primary bg-container px-4 py-3 sm:px-6">
         <h1 className="text-lg font-semibold tracking-tight text-text-primary">
@@ -365,9 +365,9 @@ function App() {
       </header>
 
       {/* ── Main Content ───────────────────────────────────────── */}
-      <main className="flex flex-1 flex-col items-center justify-center px-2 py-4 md:py-12">
+      <main className="flex flex-1 min-h-0 flex-col items-center justify-center px-2 py-3 md:py-10">
         {/* Controls */}
-        <div className="mb-6 flex items-center justify-center gap-2">
+        <div className="mb-4 flex items-center justify-center gap-2">
           <button
             onClick={() => handleGenerate()}
             disabled={generating}
@@ -386,7 +386,7 @@ function App() {
               <Settings size={18} />
             </Button>
             <Popover
-              placement="bottom end"
+              placement="top end"
               className="w-64 rounded-lg border border-border-primary bg-container shadow-lg outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95"
             >
               <Dialog className="p-4 outline-none">
