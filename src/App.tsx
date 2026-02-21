@@ -10,6 +10,8 @@ import {
   Eraser,
   PartyPopper,
   RotateCcw,
+  Eye,
+  Gauge,
 } from "lucide-react";
 import {
   Button,
@@ -186,7 +188,9 @@ function App() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handleGenerate() {
+  function handleGenerate(overrideDifficulty?: Difficulty) {
+    const diff = overrideDifficulty ?? difficulty;
+    if (overrideDifficulty) setDifficulty(overrideDifficulty);
     setGenerating(true);
     setShowSolution(false);
     setSelectedCell(null);
@@ -194,11 +198,11 @@ function App() {
     setHasWonCurrent(false);
 
     setTimeout(() => {
-      const { solved, puzzle } = generatePuzzle(difficulty);
+      const { solved, puzzle } = generatePuzzle(diff);
       setSolvedGrid(solved);
       setPuzzleGrid(puzzle);
       setGenerating(false);
-      incrementPlayed(difficulty);
+      incrementPlayed(diff);
     }, 50);
   }
 
@@ -361,11 +365,11 @@ function App() {
       </header>
 
       {/* ── Main Content ───────────────────────────────────────── */}
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-8 md:py-12">
+      <main className="flex flex-1 flex-col items-center justify-center px-2 py-4 md:py-12">
         {/* Controls */}
         <div className="mb-6 flex items-center justify-center gap-2">
           <button
-            onClick={handleGenerate}
+            onClick={() => handleGenerate()}
             disabled={generating}
             className="cursor-pointer rounded-md border border-border-primary bg-elevated px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
           >
@@ -376,7 +380,7 @@ function App() {
           <DialogTrigger isOpen={settingsOpen} onOpenChange={setSettingsOpen}>
             <Button
               aria-label="Settings"
-              isDisabled={!puzzleGrid}
+              isDisabled={!puzzleGrid || generating}
               className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-35"
             >
               <Settings size={18} />
@@ -395,7 +399,10 @@ function App() {
                     <RadioGroup
                       aria-label="Difficulty"
                       value={difficulty}
-                      onChange={(val) => setDifficulty(val as Difficulty)}
+                      onChange={(val) => {
+                        setSettingsOpen(false);
+                        handleGenerate(val as Difficulty);
+                      }}
                       className="flex gap-1"
                     >
                       {DIFFICULTIES.map((d) => (
@@ -421,7 +428,7 @@ function App() {
                         setShowSolution(val);
                         setSettingsOpen(false);
                       }}
-                      isDisabled={!puzzleGrid}
+                      isDisabled={!puzzleGrid || generating}
                       className="group flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border border-border-primary bg-active p-0.5 transition-colors data-[selected]:bg-accent disabled:cursor-not-allowed disabled:opacity-35"
                     >
                       <span className="block h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 group-data-[selected]:translate-x-4" />
@@ -436,6 +443,21 @@ function App() {
         {/* Grid + Controls */}
         {displayGrid && (
           <div className="flex flex-col items-center">
+            {/* Board info */}
+            {!generating && (
+              <div className="mb-2 flex w-full items-center gap-3 text-sm text-text-secondary">
+                <span className="flex items-center gap-1 capitalize">
+                  <Gauge size={18} />
+                  {difficulty}
+                </span>
+                {showSolution && (
+                  <span className="flex items-center gap-1 text-accent">
+                    <Eye size={18} />
+                    Answers shown
+                  </span>
+                )}
+              </div>
+            )}
             <table
               ref={gridRef}
               tabIndex={0}
@@ -457,7 +479,8 @@ function App() {
                           onClick={() => handleCellClick(r, c)}
                           className={`text-center align-middle font-semibold tabular-nums border border-border-primary cursor-pointer select-none transition-colors duration-75
                           w-10 h-10 text-[1.05rem]
-                          min-[480px]:w-12 min-[480px]:h-12 min-[480px]:text-[1.2rem]
+                          min-[390px]:w-11 min-[390px]:h-11 min-[390px]:text-[1.2rem]
+                          min-[480px]:w-12 min-[480px]:h-12 min-[480px]:text-[1.25rem]
                           md:w-[54px] md:h-[54px] md:text-[1.35rem]
                           lg:w-[60px] lg:h-[60px] lg:text-2xl
                           min-[1440px]:w-[68px] min-[1440px]:h-[68px] min-[1440px]:text-[1.65rem]
@@ -485,25 +508,29 @@ function App() {
                 aria-label="Erase"
                 onPress={eraseCell}
                 isDisabled={
+                  generating ||
                   !selectedCell ||
                   (selectedCell &&
                     isGivenCell(selectedCell[0], selectedCell[1]))
                 }
-                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+                className="flex h-10 w-10 min-[390px]:h-11 min-[390px]:w-11 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
               >
                 <Eraser size={18} />
               </Button>
               <Button
                 aria-label="Undo"
                 isDisabled
-                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+                className="flex h-10 w-10 min-[390px]:h-11 min-[390px]:w-11 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
               >
                 <RotateCcw size={18} />
               </Button>
             </div>
 
             {/* ── Numpad ─────────────────────────────────────────── */}
-            <Group aria-label="Number pad" className="mt-1 flex w-full gap-1">
+            <Group
+              aria-label="Number pad"
+              className="mt-1 flex w-full gap-0.5 min-[480px]:gap-1"
+            >
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
                 // Count how many times this number appears in the display grid
                 const count = displayGrid
@@ -515,9 +542,10 @@ function App() {
                     key={n}
                     aria-label={`${n}`}
                     onPress={() => enterNumber(n)}
-                    isDisabled={!selectedCell || isComplete}
-                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-md border py-3 text-lg font-semibold tabular-nums outline-none transition-colors
-                    min-[480px]:py-3.5 min-[480px]:text-xl
+                    isDisabled={generating || !selectedCell || isComplete}
+                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-md border py-3 text-xl font-semibold tabular-nums outline-none transition-colors
+                    min-[390px]:py-3.5
+                    min-[480px]:py-4 min-[480px]:text-2xl
                     hover:border-border-strong hover:bg-hover active:bg-active
                     disabled:cursor-not-allowed disabled:opacity-35
                     ${isComplete ? "border-border-primary bg-active text-text-tertiary" : "border-border-primary bg-elevated text-text-primary"}
@@ -551,7 +579,7 @@ function App() {
                   Congratulations! You completed the puzzle.
                 </p>
                 <Button
-                  onPress={handleGenerate}
+                  onPress={() => handleGenerate()}
                   className="mt-2 w-full cursor-pointer rounded-md border border-accent bg-accent px-4 py-2.5 text-sm font-medium text-white outline-none transition-colors hover:bg-accent-hover active:bg-accent"
                 >
                   New Puzzle
