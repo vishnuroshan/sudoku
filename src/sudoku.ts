@@ -178,33 +178,72 @@ export function generateFullGrid(log: LogFn): Grid {
 // ─── Puzzle Creation (Removal Phase) ─────────────────────────────────────────
 
 /**
- * Create a puzzle from a solved grid by removing numbers one at a time.
+ * Generate a puzzle for the given difficulty.
  *
- * The number of clues to keep is determined by the chosen difficulty level.
- * We iterate through a shuffled list of all 81 cells and attempt to
- * remove each one. After removal we check whether the puzzle still has
- * exactly one solution — if not, we put the number back (revert).
+ * Strategy:
+ *  1. Generate a fresh solved grid.
+ *  2. Run a single removal pass — try to remove as many cells as possible
+ *     while preserving a unique solution.
+ *  3. If the resulting clue count falls within the difficulty range, we're done.
+ *     Otherwise, start over with a new grid (different grids allow different
+ *     amounts of removal).
  *
- * Guarantees:
- *  • The puzzle always has exactly ONE unique solution.
- *  • Clue count stays within the range defined by the difficulty.
+ * A max-attempts safeguard prevents infinite loops. If we can't hit the
+ * exact range we return the best attempt so far.
  */
-export function createPuzzle(
+export function generatePuzzle(
+  difficulty: Difficulty,
+  log: LogFn,
+): { solved: Grid; puzzle: Grid } {
+  const { min: minClues, max: maxClues } = DIFFICULTY_CLUES[difficulty];
+  const maxAttempts = 50;
+
+  let bestResult: { solved: Grid; puzzle: Grid; clues: number } | null = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    log(`--- Attempt ${attempt} ---`);
+    log("Generating full grid...");
+    const solved = generateFullGrid(log);
+
+    log("Removing cells...");
+    const puzzle = removeCells(solved, difficulty, log);
+
+    const clues = puzzle.flat().filter((v) => v !== 0).length;
+    log(`Attempt ${attempt} result: ${clues} clues`);
+
+    // Track the closest result in case we never land exactly in range.
+    if (
+      !bestResult ||
+      Math.abs(clues - minClues) < Math.abs(bestResult.clues - minClues)
+    ) {
+      bestResult = { solved: cloneGrid(solved), puzzle, clues };
+    }
+
+    if (clues >= minClues && clues <= maxClues) {
+      log(`✓ Puzzle accepted with ${clues} clues (target ${minClues}–${maxClues})`);
+      return { solved: cloneGrid(solved), puzzle };
+    }
+
+    log(`Clues ${clues} not in range ${minClues}–${maxClues}, retrying...`);
+  }
+
+  // Fallback to the best attempt we found.
+  log(`Max attempts reached. Using best result with ${bestResult!.clues} clues.`);
+  return { solved: bestResult!.solved, puzzle: bestResult!.puzzle };
+}
+
+/**
+ * Single-pass removal: try to remove as many cells as possible from a solved
+ * grid while keeping exactly one solution.
+ */
+function removeCells(
   solvedGrid: Grid,
   difficulty: Difficulty,
   log: LogFn,
 ): Grid {
   const puzzle = cloneGrid(solvedGrid);
-  const { min: minClues, max: maxClues } = DIFFICULTY_CLUES[difficulty];
-
-  // Pick a random target clue count within the difficulty range.
-  const targetClues =
-    minClues + Math.floor(Math.random() * (maxClues - minClues + 1));
-  const maxRemovals = 81 - targetClues;
-
-  log(
-    `Difficulty: ${difficulty} — targeting ${targetClues} clues (removing up to ${maxRemovals})`,
-  );
+  const { min: minClues } = DIFFICULTY_CLUES[difficulty];
+  const maxRemovals = 81 - minClues;
 
   // Build a shuffled list of all 81 cell positions.
   const positions: [number, number][] = [];
@@ -221,18 +260,14 @@ export function createPuzzle(
     if (removed >= maxRemovals) break;
 
     const value = puzzle[row][col];
-    if (value === 0) continue; // already empty
+    if (value === 0) continue;
 
-    // Temporarily remove the number.
     puzzle[row][col] = 0;
     log(`Trying to remove ${value} from (${row}, ${col})`);
 
-    // Check if the puzzle still has a unique solution.
-    // We work on a clone so our counting solver doesn't corrupt the puzzle.
     const solutions = countSolutions(cloneGrid(puzzle));
 
     if (solutions !== 1) {
-      // Multiple (or zero) solutions → revert.
       puzzle[row][col] = value;
       log(`Reverted (${row}, ${col}) — ${solutions} solutions detected`);
     } else {
@@ -241,6 +276,6 @@ export function createPuzzle(
     }
   }
 
-  log(`Puzzle created: removed ${removed} cells, ${81 - removed} clues remain`);
+  log(`Pass complete: removed ${removed} cells, ${81 - removed} clues remain`);
   return puzzle;
 }
