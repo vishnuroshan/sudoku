@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { generatePuzzle } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
-import { Sun, Moon, Settings, Eraser, Undo2 } from "lucide-react";
+import { Sun, Moon, Settings, Eraser, Undo2, PartyPopper } from "lucide-react";
 import {
   Button,
   DialogTrigger,
@@ -45,6 +45,47 @@ function cloneGrid(g: Grid): Grid {
   return g.map((row) => [...row]);
 }
 
+/** Returns a Set of "r,c" strings for all cells that have conflicts. */
+function getConflicts(grid: Grid, puzzleGrid: Grid): Set<string> {
+  const conflicts = new Set<string>();
+
+  for (let r = 0; r < 9; r++) {
+    for (let c = 0; c < 9; c++) {
+      const val = grid[r][c];
+      if (val === 0) continue;
+      // Only check user-entered cells (non-givens)
+      if (puzzleGrid[r][c] !== 0) continue;
+
+      // Check row
+      for (let cc = 0; cc < 9; cc++) {
+        if (cc !== c && grid[r][cc] === val) {
+          conflicts.add(`${r},${c}`);
+          conflicts.add(`${r},${cc}`);
+        }
+      }
+      // Check column
+      for (let rr = 0; rr < 9; rr++) {
+        if (rr !== r && grid[rr][c] === val) {
+          conflicts.add(`${r},${c}`);
+          conflicts.add(`${rr},${c}`);
+        }
+      }
+      // Check 3×3 box
+      const br = Math.floor(r / 3) * 3;
+      const bc = Math.floor(c / 3) * 3;
+      for (let rr = br; rr < br + 3; rr++) {
+        for (let cc = bc; cc < bc + 3; cc++) {
+          if ((rr !== r || cc !== c) && grid[rr][cc] === val) {
+            conflicts.add(`${r},${c}`);
+            conflicts.add(`${rr},${cc}`);
+          }
+        }
+      }
+    }
+  }
+  return conflicts;
+}
+
 function App() {
   const { theme, toggle: toggleTheme } = useTheme();
   const [solvedGrid, setSolvedGrid] = useState<Grid | null>(null);
@@ -86,6 +127,23 @@ function App() {
       }
     }
     return merged;
+  })();
+
+  // Conflict detection
+  const conflicts =
+    displayGrid && puzzleGrid && !showSolution
+      ? getConflicts(displayGrid, puzzleGrid)
+      : new Set<string>();
+
+  // Win detection: grid is full, no conflicts, matches solution
+  const isWon = (() => {
+    if (!displayGrid || !solvedGrid || showSolution) return false;
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (displayGrid[r][c] !== solvedGrid[r][c]) return false;
+      }
+    }
+    return true;
   })();
 
   function isGivenCell(r: number, c: number): boolean {
@@ -163,8 +221,16 @@ function App() {
     if (!selectedCell || !displayGrid) return "";
     const [sr, sc] = selectedCell;
 
+    // Conflict takes priority on the selected cell too
+    const isConflict = conflicts.has(`${r},${c}`);
+
     // Selected cell itself
-    if (r === sr && c === sc) return "bg-cell-selected";
+    if (r === sr && c === sc) {
+      return isConflict ? "bg-cell-conflict" : "bg-cell-selected";
+    }
+
+    // Conflict highlight
+    if (isConflict) return "bg-cell-conflict";
 
     // Same value highlight
     const selectedVal = displayGrid[sr][sc];
@@ -288,6 +354,7 @@ function App() {
                       const isEmpty = cell === 0;
                       const isUserEntry = !isGiven && userGrid[r][c] !== 0;
                       const highlight = getCellHighlight(r, c);
+                      const hasConflict = conflicts.has(`${r},${c}`);
                       return (
                         <td
                           key={c}
@@ -304,7 +371,7 @@ function App() {
                           ${c === 8 ? "border-r-2 border-r-border-strong" : ""}
                           ${r === 8 ? "border-b-2 border-b-border-strong" : ""}
                           ${highlight}
-                          ${isGiven ? "text-clue" : isUserEntry ? "text-solution" : "text-text-tertiary"}
+                          ${hasConflict && isUserEntry ? "text-error" : isGiven ? "text-clue" : isUserEntry ? "text-solution" : "text-text-tertiary"}
                         `}
                         >
                           {isEmpty ? "" : cell}
@@ -366,6 +433,16 @@ function App() {
                 );
               })}
             </Group>
+          </div>
+        )}
+
+        {/* ── Win message ─────────────────────────────────────── */}
+        {isWon && (
+          <div className="mt-6 flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-5 py-3 text-success">
+            <PartyPopper size={20} />
+            <span className="text-sm font-semibold">
+              Congratulations! Puzzle solved!
+            </span>
           </div>
         )}
       </main>

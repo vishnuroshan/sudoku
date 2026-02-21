@@ -29,6 +29,9 @@
   --color-cell-selected: #d4e0f7;
   --color-cell-peer: #e8ecf4;
   --color-cell-same-value: #c8d8f0;
+  --color-cell-conflict: #fde8e8;
+  --color-error: #d93025;
+  --color-success: #188038;
 }
 
 /* Dark theme overrides */
@@ -52,6 +55,9 @@
   --color-cell-selected: #2a3a5c;
   --color-cell-peer: #232630;
   --color-cell-same-value: #2e3d5a;
+  --color-cell-conflict: #3d1f1f;
+  --color-error: #f28b82;
+  --color-success: #81c995;
 }
 
 @layer base {
