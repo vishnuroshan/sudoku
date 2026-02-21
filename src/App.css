@@ -1,0 +1,114 @@
+/* ─── Layout ────────────────────────────────────────────────────────────── */
+
+.app {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+h1 {
+  margin-bottom: 1rem;
+}
+
+/* ─── Buttons ───────────────────────────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.controls button {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #1a1a1a;
+  color: #eee;
+  transition: background 0.15s;
+}
+
+.controls button:hover:not(:disabled) {
+  background: #333;
+}
+
+.controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Sudoku Grid ───────────────────────────────────────────────────────── */
+
+.sudoku-grid {
+  border-collapse: collapse;
+  margin: 0 auto 1.5rem;
+}
+
+.cell {
+  width: 44px;
+  height: 44px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border: 1px solid #444;
+  color: #eee;
+}
+
+/* Puzzle given numbers → blue */
+.given-cell {
+  color: #4a9eff;
+}
+
+/* Thicker borders for 3×3 box boundaries */
+.border-left {
+  border-left: 2.5px solid #ccc;
+}
+.border-top {
+  border-top: 2.5px solid #ccc;
+}
+.border-right {
+  border-right: 2.5px solid #ccc;
+}
+.border-bottom {
+  border-bottom: 2.5px solid #ccc;
+}
+
+/* Cells revealed when showing the solution → dark orange */
+.solved-cell {
+  color: #e68a00;
+}
+
+/* ─── Log Panel ─────────────────────────────────────────────────────────── */
+
+.log-panel {
+  max-height: 250px;
+  overflow-y: auto;
+  text-align: left;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-top: 1rem;
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.log-panel h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.log-entry {
+  color: #bbb;
+  white-space: pre-wrap;
+}
