@@ -49,7 +49,7 @@ function useTheme() {
   return { theme, toggle };
 }
 
-const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"];
+const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard", "master"];
 
 function createEmptyGrid(): Grid {
   return Array.from({ length: 9 }, () => Array(9).fill(0));
@@ -415,8 +415,8 @@ function App() {
               <Settings size={18} />
             </Button>
             <Popover
-              placement="top end"
-              className="w-64 rounded-lg border border-border-primary bg-container shadow-lg outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95"
+              placement="bottom end"
+              className="w-72 rounded-lg border border-border-primary bg-container shadow-lg outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95"
             >
               <Dialog className="p-4 outline-none">
                 <div className="space-y-4">
@@ -432,7 +432,7 @@ function App() {
                         setSettingsOpen(false);
                         handleGenerate(val as Difficulty);
                       }}
-                      className="flex gap-1"
+                      className="grid grid-cols-2 gap-1"
                     >
                       {DIFFICULTIES.map((d) => (
                         <Radio
@@ -475,7 +475,17 @@ function App() {
             {/* Board info */}
             {!generating && (
               <div className="mb-2 flex w-full items-center gap-3 text-sm text-text-secondary">
-                <span className="flex items-center gap-1 capitalize">
+                <span
+                  className={`flex items-center gap-1 capitalize font-medium ${
+                    difficulty === "easy"
+                      ? "text-green-600 dark:text-green-400"
+                      : difficulty === "medium"
+                        ? "text-yellow-500 dark:text-yellow-400"
+                        : difficulty === "hard"
+                          ? "text-amber-700 dark:text-amber-500"
+                          : "text-red-700 dark:text-red-500"
+                  }`}
+                >
                   <Gauge size={18} />
                   {difficulty}
                 </span>

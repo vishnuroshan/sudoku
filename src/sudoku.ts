@@ -4,16 +4,15 @@ import { shuffle } from "lodash-es";
 // Grid is a 9x9 2D array. 0 means empty cell.
 export type Grid = number[][];
 
-export type Difficulty = "easy" | "medium" | "hard";
+export type Difficulty = "easy" | "medium" | "hard" | "master" | "extreme";
 
 // How many clues (filled cells) to leave for each difficulty.
-export const DIFFICULTY_CLUES: Record<
-  Difficulty,
-  { min: number; max: number }
-> = {
-  easy: { min: 27, max: 32 },
-  medium: { min: 25, max: 27 },
-  hard: { min: 17, max: 19 },
+export const DIFFICULTY_CLUES: Record<Difficulty, { min: number; max: number }> = {
+  easy: { min: 35, max: 38 },
+  medium: { min: 30, max: 35 },
+  hard: { min: 25, max: 30 },
+  master: { min: 20, max: 25 },
+  extreme: { min: 17, max: 19 },
 };
 
 // Log callback — logs generation events to the browser console.
