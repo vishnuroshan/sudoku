@@ -32,6 +32,10 @@
   --color-cell-conflict: #fde8e8;
   --color-error: #d93025;
   --color-success: #188038;
+
+  --color-numpad: #b5275f;
+  --color-numpad-hover: #c4306b;
+  --color-numpad-active: #9e2054;
 }
 
 /* Dark theme overrides */
@@ -58,6 +62,10 @@
   --color-cell-conflict: #3d1f1f;
   --color-error: #f28b82;
   --color-success: #81c995;
+
+  --color-numpad: #c2185b;
+  --color-numpad-hover: #d81b60;
+  --color-numpad-active: #ad1457;
 }
 
 @layer base {

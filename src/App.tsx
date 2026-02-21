@@ -529,7 +529,7 @@ function App() {
             {/* ── Numpad ─────────────────────────────────────────── */}
             <Group
               aria-label="Number pad"
-              className="mt-1 flex w-full gap-0.5 min-[480px]:gap-1"
+              className="mt-2 flex w-full gap-1.5 min-[480px]:gap-2"
             >
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
                 // Count how many times this number appears in the display grid
@@ -543,13 +543,11 @@ function App() {
                     aria-label={`${n}`}
                     onPress={() => enterNumber(n)}
                     isDisabled={generating || !selectedCell || isComplete}
-                    className={`flex flex-1 cursor-pointer items-center justify-center rounded-md border py-3 text-xl font-semibold tabular-nums outline-none transition-colors
-                    min-[390px]:py-3.5
-                    min-[480px]:py-4 min-[480px]:text-2xl
-                    hover:border-border-strong hover:bg-hover active:bg-active
-                    disabled:cursor-not-allowed disabled:opacity-35
-                    ${isComplete ? "border-border-primary bg-active text-text-tertiary" : "border-border-primary bg-elevated text-text-primary"}
-                  `}
+                    className="flex flex-1 cursor-pointer items-center justify-center rounded-xl py-3.5 text-2xl font-bold text-numpad tabular-nums outline-none transition-colors
+                    min-[390px]:py-4 min-[390px]:text-3xl
+                    min-[480px]:py-4 min-[480px]:text-3xl
+                    hover:text-numpad-hover active:bg-numpad/10 active:text-numpad-active
+                    disabled:cursor-not-allowed disabled:opacity-30"
                   >
                     {n}
                   </Button>
