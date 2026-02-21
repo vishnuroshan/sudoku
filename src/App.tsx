@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { generateFullGrid, createPuzzle, cloneGrid } from "./sudoku";
+import { generatePuzzle } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
 import "./App.css";
 
@@ -29,13 +29,10 @@ function App() {
 
     // Use setTimeout so the UI shows the "generating" state before blocking.
     setTimeout(() => {
-      log("=== Generating full grid ===");
-      const solved = generateFullGrid(log);
+      log(`=== Generating ${difficulty} puzzle ===`);
+      const { solved, puzzle } = generatePuzzle(difficulty, log);
 
-      log("=== Creating puzzle (removing cells) ===");
-      const puzzle = createPuzzle(solved, difficulty, log);
-
-      setSolvedGrid(cloneGrid(solved));
+      setSolvedGrid(solved);
       setPuzzleGrid(puzzle);
       setLogs(newLogs);
       setGenerating(false);
@@ -71,9 +68,9 @@ function App() {
               onChange={(e) => setDifficulty(e.target.value as Difficulty)}
               disabled={generating}
             >
-              <option value="easy">Easy (27–32 clues)</option>
-              <option value="medium">Medium (25–27 clues)</option>
-              <option value="hard">Hard (17–19 clues)</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
             </select>
             <button onClick={handleGenerate} disabled={generating}>
               {generating ? "Generating…" : "Generate Puzzle"}
