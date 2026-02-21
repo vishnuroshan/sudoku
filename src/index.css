@@ -1,62 +1,72 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import "tailwindcss";
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+/*
+ * Zed-inspired Color System
+ * Light theme by default, dark theme via .dark class on <html>
+ */
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme {
+  /* Light theme colors (used as defaults) */
+  --color-page: #f7f8fa;
+  --color-container: #ffffff;
+  --color-elevated: #ffffff;
+  --color-hover: #ebecf0;
+  --color-active: #e4e5e9;
+
+  --color-text-primary: #151619;
+  --color-text-secondary: #5d5f66;
+  --color-text-tertiary: #9ea0a6;
+
+  --color-border-primary: #e4e4e6;
+  --color-border-strong: #c8c9cc;
+
+  --color-accent: #365fc9;
+  --color-accent-hover: #4170db;
+
+  --color-clue: #2d5cb5;
+  --color-solution: #c47a2a;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* Dark theme overrides */
+:root.dark {
+  --color-page: #151619;
+  --color-container: #1e2024;
+  --color-elevated: #26282e;
+  --color-hover: #2e3035;
+  --color-active: #383a40;
+
+  --color-text-primary: #e1e1e6;
+  --color-text-secondary: #8d8f99;
+  --color-text-tertiary: #5d5f66;
+
+  --color-border-primary: #2e3035;
+  --color-border-strong: #44464d;
+
+  --color-clue: #7aa2f7;
+  --color-solution: #e0976f;
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-#root {
-  width: 100%;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-}
-button:focus,
-button:focus-visible {
-  outline: none;
-}
-
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  a:hover {
-    color: #747bff;
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-page);
+    color: var(--color-text-primary);
   }
-  button {
-    background-color: #f9f9f9;
+
+  #root {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 }

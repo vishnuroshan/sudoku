@@ -16,8 +16,10 @@ export const DIFFICULTY_CLUES: Record<
   hard: { min: 17, max: 19 },
 };
 
-// Log callback — used to stream generation/solver events to the UI.
-type LogFn = (message: string) => void;
+// Log callback — logs generation events to the browser console.
+function log(message: string) {
+  console.log(`[sudoku] ${message}`);
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -139,7 +141,7 @@ export function countSolutions(grid: Grid): number {
  * produces a different grid. Backtracking ensures the result always
  * satisfies all Sudoku constraints.
  */
-export function generateFullGrid(log: LogFn): Grid {
+export function generateFullGrid(): Grid {
   // Start with an empty grid.
   const grid: Grid = Array.from({ length: 9 }, () => Array(9).fill(0));
 
@@ -193,7 +195,6 @@ export function generateFullGrid(log: LogFn): Grid {
  */
 export function generatePuzzle(
   difficulty: Difficulty,
-  log: LogFn,
 ): { solved: Grid; puzzle: Grid } {
   const { min: minClues, max: maxClues } = DIFFICULTY_CLUES[difficulty];
   const maxAttempts = 50;
@@ -203,10 +204,10 @@ export function generatePuzzle(
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     log(`--- Attempt ${attempt} ---`);
     log("Generating full grid...");
-    const solved = generateFullGrid(log);
+    const solved = generateFullGrid();
 
     log("Removing cells...");
-    const puzzle = removeCells(solved, difficulty, log);
+    const puzzle = removeCells(solved, difficulty);
 
     const clues = puzzle.flat().filter((v) => v !== 0).length;
     log(`Attempt ${attempt} result: ${clues} clues`);
@@ -239,7 +240,6 @@ export function generatePuzzle(
 function removeCells(
   solvedGrid: Grid,
   difficulty: Difficulty,
-  log: LogFn,
 ): Grid {
   const puzzle = cloneGrid(solvedGrid);
   const { min: minClues } = DIFFICULTY_CLUES[difficulty];
