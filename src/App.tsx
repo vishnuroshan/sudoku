@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { generatePuzzle } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
 import { Sun, Moon, Settings } from "lucide-react";
@@ -44,10 +44,15 @@ function App() {
   const [generating, setGenerating] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [selectedCell, setSelectedCell] = useState<[number, number] | null>(
+    null,
+  );
+  const gridRef = useRef<HTMLTableElement>(null);
 
   function handleGenerate() {
     setGenerating(true);
     setShowSolution(false);
+    setSelectedCell(null);
 
     setTimeout(() => {
       const { solved, puzzle } = generatePuzzle(difficulty);
@@ -59,6 +64,63 @@ function App() {
 
   const displayGrid: Grid | null =
     showSolution && solvedGrid ? solvedGrid : puzzleGrid;
+
+  function handleCellClick(r: number, c: number) {
+    setSelectedCell([r, c]);
+    gridRef.current?.focus();
+  }
+
+  function handleGridKeyDown(e: React.KeyboardEvent) {
+    if (!selectedCell) return;
+    const [r, c] = selectedCell;
+    let nr = r;
+    let nc = c;
+
+    switch (e.key) {
+      case "ArrowUp":
+        nr = Math.max(0, r - 1);
+        break;
+      case "ArrowDown":
+        nr = Math.min(8, r + 1);
+        break;
+      case "ArrowLeft":
+        nc = Math.max(0, c - 1);
+        break;
+      case "ArrowRight":
+        nc = Math.min(8, c + 1);
+        break;
+      case "Escape":
+        setSelectedCell(null);
+        return;
+      default:
+        return;
+    }
+    e.preventDefault();
+    setSelectedCell([nr, nc]);
+  }
+
+  function getCellHighlight(r: number, c: number): string {
+    if (!selectedCell || !displayGrid) return "";
+    const [sr, sc] = selectedCell;
+
+    // Selected cell itself
+    if (r === sr && c === sc) return "bg-cell-selected";
+
+    // Same value highlight
+    const selectedVal = displayGrid[sr][sc];
+    if (selectedVal !== 0 && displayGrid[r][c] === selectedVal)
+      return "bg-cell-same-value";
+
+    // Peer highlight: same row, column, or 3×3 box
+    const sameRow = r === sr;
+    const sameCol = c === sc;
+    const sameBox =
+      Math.floor(r / 3) === Math.floor(sr / 3) &&
+      Math.floor(c / 3) === Math.floor(sc / 3);
+    if (sameRow || sameCol || sameBox) return "bg-cell-peer";
+
+    return "";
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -151,7 +213,12 @@ function App() {
 
         {/* Grid */}
         {displayGrid && (
-          <table className="border-collapse bg-container">
+          <table
+            ref={gridRef}
+            tabIndex={0}
+            onKeyDown={handleGridKeyDown}
+            className="border-collapse bg-container outline-none"
+          >
             <tbody>
               {displayGrid.map((row, r) => (
                 <tr key={r}>
@@ -159,10 +226,12 @@ function App() {
                     const isGiven =
                       puzzleGrid !== null && puzzleGrid[r][c] !== 0;
                     const isEmpty = cell === 0;
+                    const highlight = getCellHighlight(r, c);
                     return (
                       <td
                         key={c}
-                        className={`text-center align-middle font-semibold tabular-nums border border-border-primary
+                        onClick={() => handleCellClick(r, c)}
+                        className={`text-center align-middle font-semibold tabular-nums border border-border-primary cursor-pointer select-none transition-colors duration-75
                           w-10 h-10 text-[1.05rem]
                           min-[480px]:w-12 min-[480px]:h-12 min-[480px]:text-[1.2rem]
                           md:w-[54px] md:h-[54px] md:text-[1.35rem]
@@ -173,6 +242,7 @@ function App() {
                           ${r % 3 === 0 ? "border-t-2 border-t-border-strong" : ""}
                           ${c === 8 ? "border-r-2 border-r-border-strong" : ""}
                           ${r === 8 ? "border-b-2 border-b-border-strong" : ""}
+                          ${highlight}
                           ${isGiven ? "text-clue" : !isEmpty ? "text-solution" : "text-text-tertiary"}
                         `}
                       >
