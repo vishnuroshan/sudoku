@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import useLocalStorageState from "use-local-storage-state";
+import { openDB } from "idb";
 import { generatePuzzle } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
 import { Sun, Moon, Settings, Eraser, Undo2, PartyPopper } from "lucide-react";
@@ -45,6 +47,54 @@ function cloneGrid(g: Grid): Grid {
   return g.map((row) => [...row]);
 }
 
+/* ── IndexedDB Stats ──────────────────────────────────────────────────── */
+
+interface DifficultyStats {
+  difficulty: Difficulty;
+  wins: number;
+  played: number;
+}
+
+const DB_NAME = "sudoku-stats";
+const DB_VERSION = 1;
+const STORE_NAME = "stats";
+
+function getStatsDB() {
+  return openDB(DB_NAME, DB_VERSION, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: "difficulty" });
+      }
+    },
+  });
+}
+
+async function incrementPlayed(difficulty: Difficulty) {
+  const db = await getStatsDB();
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  const store = tx.objectStore(STORE_NAME);
+  const existing: DifficultyStats | undefined = await store.get(difficulty);
+  await store.put({
+    difficulty,
+    wins: existing?.wins ?? 0,
+    played: (existing?.played ?? 0) + 1,
+  });
+  await tx.done;
+}
+
+async function incrementWins(difficulty: Difficulty) {
+  const db = await getStatsDB();
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  const store = tx.objectStore(STORE_NAME);
+  const existing: DifficultyStats | undefined = await store.get(difficulty);
+  await store.put({
+    difficulty,
+    wins: (existing?.wins ?? 0) + 1,
+    played: existing?.played ?? 0,
+  });
+  await tx.done;
+}
+
 /** Returns a Set of "r,c" strings for all cells that have conflicts. */
 function getConflicts(grid: Grid, puzzleGrid: Grid): Set<string> {
   const conflicts = new Set<string>();
@@ -88,29 +138,57 @@ function getConflicts(grid: Grid, puzzleGrid: Grid): Set<string> {
 
 function App() {
   const { theme, toggle: toggleTheme } = useTheme();
-  const [solvedGrid, setSolvedGrid] = useState<Grid | null>(null);
-  const [puzzleGrid, setPuzzleGrid] = useState<Grid | null>(null);
-  const [userGrid, setUserGrid] = useState<Grid>(createEmptyGrid());
+  const [solvedGrid, setSolvedGrid] = useLocalStorageState<Grid | null>(
+    "sudoku_solved",
+    { defaultValue: null },
+  );
+  const [puzzleGrid, setPuzzleGrid] = useLocalStorageState<Grid | null>(
+    "sudoku_puzzle",
+    { defaultValue: null },
+  );
+  const [userGrid, setUserGrid] = useLocalStorageState<Grid>("sudoku_user", {
+    defaultValue: createEmptyGrid(),
+  });
+  const [difficulty, setDifficulty] = useLocalStorageState<Difficulty>(
+    "sudoku_difficulty",
+    { defaultValue: "medium" },
+  );
   const [showSolution, setShowSolution] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(
     null,
   );
+  const [hasWonCurrent, setHasWonCurrent] = useLocalStorageState("sudoku_won", {
+    defaultValue: false,
+  });
   const gridRef = useRef<HTMLTableElement>(null);
+
+  // Auto-generate a puzzle on first load if none saved
+  const didAutoGenerate = useRef(false);
+  useEffect(() => {
+    if (!puzzleGrid && !didAutoGenerate.current) {
+      didAutoGenerate.current = true;
+      const { solved, puzzle } = generatePuzzle("medium");
+      setSolvedGrid(solved);
+      setPuzzleGrid(puzzle);
+      incrementPlayed("medium");
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleGenerate() {
     setGenerating(true);
     setShowSolution(false);
     setSelectedCell(null);
     setUserGrid(createEmptyGrid());
+    setHasWonCurrent(false);
 
     setTimeout(() => {
       const { solved, puzzle } = generatePuzzle(difficulty);
       setSolvedGrid(solved);
       setPuzzleGrid(puzzle);
       setGenerating(false);
+      incrementPlayed(difficulty);
     }, 50);
   }
 
@@ -145,6 +223,14 @@ function App() {
     }
     return true;
   })();
+
+  // Track win in IndexedDB (only once per puzzle)
+  useEffect(() => {
+    if (isWon && !hasWonCurrent) {
+      setHasWonCurrent(true);
+      incrementWins(difficulty);
+    }
+  }, [isWon, hasWonCurrent, difficulty, setHasWonCurrent]);
 
   function isGivenCell(r: number, c: number): boolean {
     return puzzleGrid !== null && puzzleGrid[r][c] !== 0;

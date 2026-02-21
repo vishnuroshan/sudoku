@@ -11,12 +11,14 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.0",
+    "idb": "^8.0.3",
     "lodash-es": "^4.17.23",
     "lucide-react": "^0.575.0",
     "react": "^19.2.0",
     "react-aria-components": "^1.15.1",
     "react-dom": "^19.2.0",
-    "tailwindcss": "^4.2.0"
+    "tailwindcss": "^4.2.0",
+    "use-local-storage-state": "^19.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
