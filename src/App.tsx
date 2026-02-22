@@ -866,7 +866,7 @@ function App() {
               </Button>
 
               {/* ── DEV: test buttons ── */}
-              <Button
+              {/* <Button
                 aria-label="Validate solvability"
                 onPress={() => {
                   if (!displayGrid) return;
@@ -885,7 +885,7 @@ function App() {
               >
                 <Bug size={iconSize} />
                 Validate
-              </Button>
+              </Button> */}
               <Button
                 aria-label="Check uniqueness"
                 onPress={() => {
