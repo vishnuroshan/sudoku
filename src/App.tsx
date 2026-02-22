@@ -4,7 +4,7 @@ import { useMediaQuery } from "@uidotdev/usehooks";
 import { openDB } from "idb";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { generatePuzzle, solve, countSolutions } from "./sudoku";
+import { generatePuzzle, /* solve, */ countSolutions } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
 import {
   Sun,
@@ -866,7 +866,7 @@ function App() {
               </Button>
 
               {/* ── DEV: test buttons ── */}
-              <Button
+              {/* <Button
                 aria-label="Validate solvability"
                 onPress={() => {
                   if (!displayGrid) return;
@@ -885,7 +885,7 @@ function App() {
               >
                 <Bug size={iconSize} />
                 Validate
-              </Button>
+              </Button> */}
               <Button
                 aria-label="Check uniqueness"
                 onPress={() => {
