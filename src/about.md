@@ -1,10 +1,10 @@
 # About
 
-A clean, mobile-first Sudoku app built as a learning project — and something my wife and I could genuinely use.
+A clean, mobile-first Sudoku app built as a learning project and something my wife and I could genuinely use.
 
 ## Why this exists
 
-This started as a way to get better at React, TypeScript, and building something end-to-end. But it quickly turned into a collaborative project — my wife helped shape the puzzle generation algorithm and the overall UX design. The goal was to build something polished enough that she'd actually want to use it on her phone instead of downloading yet another ad-filled Sudoku app.
+This started as a way to get better at React, TypeScript, and building something end-to-end. But it quickly turned into a collaborative project my wife helped shape the puzzle generation algorithm and the overall UX design. The goal was to build something polished enough that she'd actually want to use it on her phone instead of downloading yet another ad-filled Sudoku app.
 
 It's been a fun one to work on together.
 

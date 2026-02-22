@@ -18,6 +18,8 @@ import {
   X,
   Pencil,
   Bug,
+  Pause,
+  Play,
 } from "lucide-react";
 import {
   Button,
@@ -213,6 +215,26 @@ function App() {
   const [hasWonCurrent, setHasWonCurrent] = useLocalStorageState("sudoku_won", {
     defaultValue: false,
   });
+
+  // ── Timer ──────────────────────────────────────────────────────────────
+  const [elapsedSeconds, setElapsedSeconds] = useLocalStorageState<number>(
+    "sudoku_elapsed",
+    { defaultValue: 0 },
+  );
+  const [timerPaused, setTimerPaused] = useLocalStorageState<boolean>(
+    "sudoku_timer_paused",
+    { defaultValue: false },
+  );
+  // Non-persisted: whether the interval is currently ticking.
+  // Lazy initializer restores the running state on page reload without needing
+  // a separate mount effect (which would trigger a cascading setState in effect).
+  const [timerActive, setTimerActive] = useState<boolean>(
+    () =>
+      (elapsedSeconds as number) > 0 &&
+      !(timerPaused as boolean) &&
+      !(hasWonCurrent as boolean),
+  );
+
   const gridRef = useRef<HTMLTableElement>(null);
 
   // Auto-generate a puzzle on first load if none saved
@@ -236,6 +258,9 @@ function App() {
     setUserGrid(createEmptyGrid());
     setNotesGrid(createEmptyNotesGrid());
     setNotesMode(false);
+    setElapsedSeconds(0);
+    setTimerPaused(false);
+    setTimerActive(false);
     setHasWonCurrent(false);
 
     setTimeout(() => {
@@ -282,13 +307,52 @@ function App() {
     return true;
   })();
 
-  // Track win in IndexedDB (only once per puzzle)
+  // Tick every second while the timer is active and the puzzle is unsolved.
+  // isWon as a dep ensures the interval is torn down the moment the user wins,
+  // without needing to call setState inside the win effect.
+  useEffect(() => {
+    if (!timerActive || isWon) return;
+    const id = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [timerActive, isWon, setElapsedSeconds]);
+
+  // Track win in IndexedDB (only once per puzzle).
+  // Timer is stopped via the tick effect's isWon dep — no setState here.
+  // setTimerPaused(true) on win persists the stopped state so that a page
+  // reload does not resume the timer (the lazy initializer checks timerPaused).
   useEffect(() => {
     if (isWon && !hasWonCurrent) {
       setHasWonCurrent(true);
+      setTimerPaused(true);
       incrementWins(difficulty);
     }
-  }, [isWon, hasWonCurrent, difficulty, setHasWonCurrent]);
+  }, [isWon, hasWonCurrent, difficulty, setHasWonCurrent, setTimerPaused]);
+
+  // Start the timer on the player's first action (fill, note, or erase).
+  // No-op if already ticking or if the user has explicitly paused it.
+  function startTimerIfIdle() {
+    if (!timerActive && !timerPaused) {
+      setTimerActive(true);
+    }
+  }
+
+  function pauseTimer() {
+    setTimerActive(false);
+    setTimerPaused(true);
+  }
+
+  function resumeTimer() {
+    setTimerActive(true);
+    setTimerPaused(false);
+  }
+
+  function formatTime(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
 
   function isGivenCell(r: number, c: number): boolean {
     return puzzleGrid !== null && puzzleGrid[r][c] !== 0;
@@ -301,6 +365,7 @@ function App() {
 
     // ── Notes mode: toggle candidate in this cell's notes, no fill ──
     if (notesMode) {
+      startTimerIfIdle();
       setNotesGrid((prev) => {
         const next = prev.map((row) => row.map((cell) => [...cell]));
         const idx = next[r][c].indexOf(n);
@@ -315,6 +380,7 @@ function App() {
     }
 
     // ── Fill mode: existing conflict-detection + shake logic (unchanged) ──
+    startTimerIfIdle();
     const nextUserGrid = cloneGrid(userGrid);
     nextUserGrid[r][c] = n;
     const nextMerged = cloneGrid(puzzleGrid);
@@ -368,6 +434,7 @@ function App() {
     if (!selectedCell || !puzzleGrid) return;
     const [r, c] = selectedCell;
     if (isGivenCell(r, c)) return;
+    startTimerIfIdle();
     setUserGrid((prev) => {
       const next = cloneGrid(prev);
       next[r][c] = 0;
@@ -544,6 +611,7 @@ function App() {
                       isSelected={showSolution}
                       onChange={(val) => {
                         setShowSolution(val);
+                        if (val) pauseTimer();
                         setSettingsOpen(false);
                       }}
                       isDisabled={!puzzleGrid || generating}
@@ -563,27 +631,44 @@ function App() {
           <div className="flex flex-col items-center">
             {/* Board info */}
             {!generating && (
-              <div className="mb-2 flex w-full items-center gap-3 text-sm text-text-secondary">
-                <span
-                  className={`flex items-center gap-1 capitalize font-medium ${
-                    difficulty === "easy"
-                      ? "text-green-600 dark:text-green-400"
-                      : difficulty === "medium"
-                        ? "text-yellow-500 dark:text-yellow-400"
-                        : difficulty === "hard"
-                          ? "text-amber-700 dark:text-amber-500"
-                          : "text-red-700 dark:text-red-500"
-                  }`}
-                >
-                  <Gauge size={18} />
-                  {difficulty}
-                </span>
-                {showSolution && (
-                  <span className="flex items-center gap-1 text-accent">
-                    <Eye size={18} />
-                    Answers shown
+              <div className="mb-2 flex w-full items-center justify-between text-sm text-text-secondary">
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`flex items-center gap-1 capitalize font-medium ${
+                      difficulty === "easy"
+                        ? "text-green-600 dark:text-green-400"
+                        : difficulty === "medium"
+                          ? "text-yellow-500 dark:text-yellow-400"
+                          : difficulty === "hard"
+                            ? "text-amber-700 dark:text-amber-500"
+                            : "text-red-700 dark:text-red-500"
+                    }`}
+                  >
+                    <Gauge size={18} />
+                    {difficulty}
                   </span>
-                )}
+                  {showSolution && (
+                    <span className="flex items-center gap-1 text-accent">
+                      <Eye size={18} />
+                      Answers shown
+                    </span>
+                  )}
+                </div>
+
+                {/* Timer */}
+                <div className="flex items-center gap-1.5">
+                  <span className="tabular-nums font-medium text-text-primary">
+                    {formatTime(elapsedSeconds)}
+                  </span>
+                  <button
+                    onClick={timerActive ? pauseTimer : resumeTimer}
+                    disabled={elapsedSeconds === 0 && !timerActive}
+                    aria-label={timerActive ? "Pause timer" : "Resume timer"}
+                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    {timerActive ? <Pause size={13} /> : <Play size={13} />}
+                  </button>
+                </div>
               </div>
             )}
             <table
