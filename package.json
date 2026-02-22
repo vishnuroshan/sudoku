@@ -17,6 +17,8 @@
     "react": "^19.2.0",
     "react-aria-components": "^1.15.1",
     "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.2.0",
     "use-local-storage-state": "^19.5.0"
   },

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import useLocalStorageState from "use-local-storage-state";
 import { openDB } from "idb";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { generatePuzzle } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
 import {
@@ -12,6 +14,8 @@ import {
   // RotateCcw,
   Eye,
   Gauge,
+  Info,
+  X,
 } from "lucide-react";
 import {
   Button,
@@ -25,7 +29,14 @@ import {
   Modal,
   ModalOverlay,
   Heading,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanel,
 } from "react-aria-components";
+
+import aboutMd from "./about.md?raw";
+import algorithmMd from "../ALGORITHM.md?raw";
 
 type Theme = "light" | "dark";
 
@@ -174,6 +185,7 @@ function App() {
   const [showSolution, setShowSolution] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(
     null,
   );
@@ -390,13 +402,22 @@ function App() {
         <h1 className="text-lg font-semibold tracking-tight text-text-primary">
           Sudoku
         </h1>
-        <button
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover"
-        >
-          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setInfoOpen(true)}
+            aria-label="About this app"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover"
+          >
+            <Info size={18} />
+          </button>
+          <button
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover"
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
       </header>
 
       {/* ── Main Content ───────────────────────────────────────── */}
@@ -629,6 +650,76 @@ function App() {
                   New Puzzle
                 </Button>
               </div>
+            </Dialog>
+          </Modal>
+        </ModalOverlay>
+
+        {/* ── Info Dialog ────────────────────────────────────── */}
+        <ModalOverlay
+          isOpen={infoOpen}
+          onOpenChange={setInfoOpen}
+          isDismissable
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm entering:animate-in entering:fade-in exiting:animate-out exiting:fade-out"
+        >
+          <Modal className="flex h-dvh w-full flex-col bg-container outline-none sm:mx-4 sm:my-6 sm:h-auto sm:max-h-[calc(100dvh-3rem)] sm:max-w-2xl sm:rounded-xl sm:border sm:border-border-primary sm:shadow-xl entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95">
+            <Dialog className="flex flex-1 min-h-0 flex-col outline-none">
+              {/* Dialog header */}
+              <div className="flex items-center justify-between border-b border-border-primary px-4 py-3 sm:px-6">
+                <Heading
+                  slot="title"
+                  className="text-lg font-semibold text-text-primary"
+                >
+                  Info
+                </Heading>
+                <Button
+                  onPress={() => setInfoOpen(false)}
+                  aria-label="Close"
+                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-text-secondary outline-none transition-colors hover:bg-hover"
+                >
+                  <X size={18} />
+                </Button>
+              </div>
+
+              {/* Tabs */}
+              <Tabs className="flex flex-1 min-h-0 flex-col">
+                <TabList
+                  aria-label="Info sections"
+                  className="flex shrink-0 border-b border-border-primary px-4 sm:px-6"
+                >
+                  <Tab
+                    id="about"
+                    className="cursor-pointer border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-text-secondary outline-none transition-colors hover:text-text-primary data-selected:border-accent data-selected:text-accent"
+                  >
+                    About
+                  </Tab>
+                  <Tab
+                    id="algorithm"
+                    className="cursor-pointer border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-text-secondary outline-none transition-colors hover:text-text-primary data-selected:border-accent data-selected:text-accent"
+                  >
+                    Algorithm
+                  </Tab>
+                </TabList>
+
+                <TabPanel
+                  id="about"
+                  className="flex-1 overflow-y-auto px-4 py-4 sm:px-6"
+                >
+                  <div className="prose-custom">
+                    <Markdown remarkPlugins={[remarkGfm]}>{aboutMd}</Markdown>
+                  </div>
+                </TabPanel>
+
+                <TabPanel
+                  id="algorithm"
+                  className="flex-1 overflow-y-auto px-4 py-4 sm:px-6"
+                >
+                  <div className="prose-custom">
+                    <Markdown remarkPlugins={[remarkGfm]}>
+                      {algorithmMd}
+                    </Markdown>
+                  </div>
+                </TabPanel>
+              </Tabs>
             </Dialog>
           </Modal>
         </ModalOverlay>
