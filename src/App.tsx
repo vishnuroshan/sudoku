@@ -550,10 +550,7 @@ function App() {
             className="text-2xl font-bold tracking-tight text-text-primary"
             style={{ fontFamily: "Times New Roman, Times, serif" }}
           >
-            Sudoku{" "}
-            <span className="text-red-500 text-sm font-bold">
-              数独 愛する妻のために
-            </span>
+            Sudoku
           </h1>
           <button
             onClick={() => setInfoOpen(true)}
@@ -625,6 +622,19 @@ function App() {
           </button>
         </div>
       </header>
+
+      {/* ── Japanese subtitle ─────────────────────────────────── */}
+      <div className="w-full border-b border-border-primary bg-container py-1.5 text-center">
+        <span
+          className="text-sm font-bold text-red-500"
+          style={{
+            fontFamily:
+              '"Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", "Noto Serif JP", serif',
+          }}
+        >
+          数独 愛する妻のために
+        </span>
+      </div>
 
       {/* ── Main Content ───────────────────────────────────────── */}
       <main className="flex flex-1 min-h-0 flex-col items-center justify-center px-2 py-3 md:py-10">
