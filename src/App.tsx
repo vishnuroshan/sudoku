@@ -13,7 +13,6 @@ import {
   PartyPopper,
   // RotateCcw,
   Eye,
-  Gauge,
   Info,
   X,
   Pencil,
@@ -668,7 +667,7 @@ function App() {
                             : "text-red-700 dark:text-red-500"
                     }`}
                   >
-                    <Gauge size={18} />
+                    {/* <Gauge size={18} /> */}
                     {difficulty}
                   </span>
                   {showSolution && (
