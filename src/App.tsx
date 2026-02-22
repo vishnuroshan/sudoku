@@ -3,7 +3,7 @@ import useLocalStorageState from "use-local-storage-state";
 import { openDB } from "idb";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { generatePuzzle } from "./sudoku";
+import { generatePuzzle, solve, countSolutions } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
 import {
   Sun,
@@ -17,6 +17,7 @@ import {
   Info,
   X,
   Pencil,
+  Bug,
 } from "lucide-react";
 import {
   Button,
@@ -197,6 +198,11 @@ function App() {
     { defaultValue: createEmptyNotesGrid() },
   );
   const [notesMode, setNotesMode] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    title: string;
+    ok: boolean;
+    message: string;
+  } | null>(null);
   const [showSolution, setShowSolution] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -666,20 +672,60 @@ function App() {
                 onPress={() => setNotesMode((m) => !m)}
                 isDisabled={generating || !puzzleGrid || showSolution}
                 className={`flex h-10 w-10 min-[390px]:h-11 min-[390px]:w-11 cursor-pointer items-center justify-center rounded-md border outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-35
-                  ${notesMode
-                    ? "border-accent bg-accent text-white"
-                    : "border-border-primary bg-elevated text-text-secondary hover:border-border-strong hover:bg-hover active:bg-active"
+                  ${
+                    notesMode
+                      ? "border-accent bg-accent text-white"
+                      : "border-border-primary bg-elevated text-text-secondary hover:border-border-strong hover:bg-hover active:bg-active"
                   }`}
               >
                 <Pencil size={16} />
               </Button>
-              {/* <Button
-                aria-label="Undo"
-                isDisabled
-                className="flex h-10 w-10 min-[390px]:h-11 min-[390px]:w-11 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+
+              {/* ── DEV: test buttons ── */}
+              <Button
+                aria-label="Validate solvability"
+                onPress={() => {
+                  if (!displayGrid) return;
+                  const clone = displayGrid.map((row) => [...row]);
+                  const ok = solve(clone);
+                  setTestResult({
+                    title: "Validate",
+                    ok,
+                    message: ok
+                      ? "The current board is solvable."
+                      : "The current board has no valid solution.",
+                  });
+                }}
+                isDisabled={!puzzleGrid || generating}
+                className="flex cursor-pointer items-center gap-1 rounded-md border border-border-primary bg-elevated px-2.5 py-1 text-xs font-medium text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <RotateCcw size={18} />
-              </Button> */}
+                <Bug size={18} />
+                Validate
+              </Button>
+              <Button
+                aria-label="Check uniqueness"
+                onPress={() => {
+                  if (!puzzleGrid) return;
+                  const clone = puzzleGrid.map((row) => [...row]);
+                  const n = countSolutions(clone);
+                  const ok = n === 1;
+                  setTestResult({
+                    title: "Uniqueness",
+                    ok,
+                    message:
+                      n === 1
+                        ? "The puzzle has exactly one solution."
+                        : n === 0
+                          ? "The puzzle has no valid solution."
+                          : "The puzzle has multiple solutions.",
+                  });
+                }}
+                isDisabled={!puzzleGrid || generating}
+                className="flex cursor-pointer items-center gap-1 rounded-md border border-border-primary bg-elevated px-2.5 py-1 text-xs font-medium text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                <Bug size={18} />
+                Uniqueness
+              </Button>
             </div>
 
             {/* ── Numpad ─────────────────────────────────────────── */}
@@ -712,6 +758,42 @@ function App() {
             </Group>
           </div>
         )}
+
+        {/* ── Test Result Dialog ─────────────────────────────── */}
+        <ModalOverlay
+          isOpen={testResult !== null}
+          onOpenChange={(open) => {
+            if (!open) setTestResult(null);
+          }}
+          isDismissable
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm entering:animate-in entering:fade-in exiting:animate-out exiting:fade-out"
+        >
+          <Modal className="mx-4 w-full max-w-xs rounded-xl border border-border-primary bg-container p-6 shadow-xl outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95">
+            <Dialog className="outline-none">
+              <div className="flex flex-col gap-3">
+                <Heading
+                  slot="title"
+                  className="text-base font-semibold text-text-primary"
+                >
+                  {testResult?.title}
+                </Heading>
+                <p
+                  className={`text-sm font-medium ${
+                    testResult?.ok ? "text-success" : "text-error"
+                  }`}
+                >
+                  {testResult?.ok ? "✓" : "✗"} {testResult?.message}
+                </p>
+                <Button
+                  onPress={() => setTestResult(null)}
+                  className="mt-1 cursor-pointer rounded-md border border-accent bg-accent px-4 py-2 text-sm font-medium text-white outline-none transition-colors hover:bg-accent-hover active:bg-accent"
+                >
+                  OK
+                </Button>
+              </div>
+            </Dialog>
+          </Modal>
+        </ModalOverlay>
 
         {/* ── Win Dialog ─────────────────────────────────────── */}
         <ModalOverlay
