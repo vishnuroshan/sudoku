@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import useLocalStorageState from "use-local-storage-state";
+import { useMediaQuery } from "@uidotdev/usehooks";
 import { openDB } from "idb";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -185,6 +186,8 @@ function getConflicts(grid: Grid, puzzleGrid: Grid): Set<string> {
 
 function App() {
   const { theme, toggle: toggleTheme } = useTheme();
+  const isMobile = useMediaQuery("only screen and (max-width: 768px)");
+  const iconSize = isMobile ? 22 : 18;
   const [solvedGrid, setSolvedGrid] = useLocalStorageState<Grid | null>(
     "sudoku_solved",
     { defaultValue: null },
@@ -555,7 +558,7 @@ function App() {
             aria-label="About this app"
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover"
           >
-            <Info size={18} />
+            <Info size={iconSize} />
           </button>
         </div>
 
@@ -612,7 +615,11 @@ function App() {
             aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover"
           >
-            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === "dark" ? (
+              <Sun size={iconSize} />
+            ) : (
+              <Moon size={iconSize} />
+            )}
           </button>
         </div>
       </header>
@@ -636,7 +643,7 @@ function App() {
               isDisabled={!puzzleGrid || generating}
               className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-35"
             >
-              <Settings size={18} />
+              <Settings size={iconSize} />
             </Button>
             <Popover
               placement="bottom end"
@@ -673,7 +680,7 @@ function App() {
                   {/* Show Answer */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-text-primary flex items-center gap-1">
-                      <Bug size={18} />
+                      <Bug size={iconSize} />
                       Show Answer
                     </span>
                     <Switch
@@ -698,7 +705,7 @@ function App() {
             aria-label="Statistics"
             className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-35"
           >
-            <ChartColumnBig size={18} />
+            <ChartColumnBig size={iconSize} />
           </button>
         </div>
 
@@ -720,12 +727,12 @@ function App() {
                             : "text-red-700 dark:text-red-500"
                     }`}
                   >
-                    {/* <Gauge size={18} /> */}
+                    {/* <Gauge size={iconSize} /> */}
                     {difficulty}
                   </span>
                   {showSolution && (
                     <span className="flex items-center gap-1 text-accent">
-                      <Eye size={18} />
+                      <Eye size={iconSize} />
                       Answers shown
                     </span>
                   )}
@@ -742,7 +749,11 @@ function App() {
                     aria-label={timerActive ? "Pause timer" : "Resume timer"}
                     className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover disabled:cursor-not-allowed disabled:opacity-35"
                   >
-                    {timerActive ? <Pause size={13} /> : <Play size={13} />}
+                    {timerActive ? (
+                      <Pause size={isMobile ? 16 : 13} />
+                    ) : (
+                      <Play size={isMobile ? 16 : 13} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -826,7 +837,7 @@ function App() {
                 }
                 className="flex h-10 w-10 min-[390px]:h-11 min-[390px]:w-11 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <Eraser size={18} />
+                <Eraser size={iconSize} />
               </Button>
               <Button
                 aria-label={notesMode ? "Notes on" : "Notes off"}
@@ -839,7 +850,7 @@ function App() {
                       : "border-border-primary bg-elevated text-text-secondary hover:border-border-strong hover:bg-hover active:bg-active"
                   }`}
               >
-                <Pencil size={16} />
+                <Pencil size={isMobile ? 20 : 16} />
               </Button>
 
               {/* ── DEV: test buttons ── */}
@@ -860,7 +871,7 @@ function App() {
                 isDisabled={!puzzleGrid || generating}
                 className="flex cursor-pointer items-center gap-1 rounded-md border border-border-primary bg-elevated px-2.5 py-1 text-xs font-medium text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <Bug size={18} />
+                <Bug size={iconSize} />
                 Validate
               </Button>
               <Button
@@ -884,7 +895,7 @@ function App() {
                 isDisabled={!puzzleGrid || generating}
                 className="flex cursor-pointer items-center gap-1 rounded-md border border-border-primary bg-elevated px-2.5 py-1 text-xs font-medium text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <Bug size={18} />
+                <Bug size={iconSize} />
                 Uniqueness
               </Button>
             </div>
@@ -1015,7 +1026,7 @@ function App() {
                     aria-label="Close"
                     className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover"
                   >
-                    <X size={16} />
+                    <X size={iconSize} />
                   </Button>
                 </div>
 
@@ -1118,7 +1129,7 @@ function App() {
                   aria-label="Close"
                   className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-text-secondary outline-none transition-colors hover:bg-hover"
                 >
-                  <X size={18} />
+                  <X size={iconSize} />
                 </Button>
               </div>
 
