@@ -551,7 +551,9 @@ function App() {
             style={{ fontFamily: "Times New Roman, Times, serif" }}
           >
             Sudoku{" "}
-            <span className="text-red-500 text-sm">数独 愛する妻のために</span>
+            <span className="text-red-500 text-sm font-bold">
+              数独 愛する妻のために
+            </span>
           </h1>
           <button
             onClick={() => setInfoOpen(true)}

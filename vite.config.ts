@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
@@ -9,40 +9,24 @@ export default defineConfig({
     tailwindcss(),
     react(),
     VitePWA({
+      // Auto-update the service worker whenever a new build is deployed
       registerType: "autoUpdate",
-      // Keep our existing public/site.webmanifest; don't generate a new one.
+
+      // We manage our own manifest in public/site.webmanifest
       manifest: false,
-      // Include static assets in the precache manifest.
-      includeAssets: [
-        "favicon.ico",
-        "favicon.svg",
-        "apple-touch-icon.png",
-        "favicon-96x96.png",
-        "web-app-manifest-192x192.png",
-        "web-app-manifest-512x512.png",
-      ],
+
+      // Workbox config: precache all built assets for full offline support
       workbox: {
-        // Precache all JS, CSS, HTML and common asset types.
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
-        // Remove stale precaches from previous SW versions automatically.
-        cleanupOutdatedCaches: true,
-        // Cache-first for same-origin assets; network-first for navigation.
-        runtimeCaching: [
-          {
-            // Navigation requests: return cached app shell, update in background.
-            urlPattern: ({ request }) => request.mode === "navigate",
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "pages-cache",
-              networkTimeoutSeconds: 3,
-            },
-          },
-        ],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff2}"],
+        // Fall back to index.html for client-side routing
+        navigateFallback: "index.html",
+        // Don't intercept API routes (add patterns here if you ever add one)
+        navigateFallbackDenylist: [/^\/api\//],
       },
+
+      // Set to true if you want the SW active during `vite dev`
       devOptions: {
-        // Enable service worker in `vite dev` so you can test offline locally.
-        enabled: true,
-        type: "module",
+        enabled: false,
       },
     }),
   ],
