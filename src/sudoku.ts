@@ -233,13 +233,17 @@ export function generatePuzzle(
 }
 
 /**
- * Single-pass removal: try to remove as many cells as possible from a solved
- * grid while keeping exactly one solution.
+ * Remove cells from a solved grid to create a puzzle with a unique solution.
+ *
+ * Two phases:
+ *  1. Greedy pass — shuffle all 81 positions and try removing each one.
+ *     A removal is kept only if countSolutions still returns 1.
+ *  2. Cleanup passes — re-sweep all remaining clues because earlier decisions
+ *     may have become stale (later removals can eliminate the alternative
+ *     solution paths that made an earlier clue look necessary). Repeat
+ *     until a full sweep produces no new removals (fixed-point).
  */
-function removeCells(
-  solvedGrid: Grid,
-  difficulty: Difficulty,
-): Grid {
+function removeCells(solvedGrid: Grid, difficulty: Difficulty): Grid {
   const puzzle = cloneGrid(solvedGrid);
   const { min: minClues } = DIFFICULTY_CLUES[difficulty];
   const maxRemovals = 81 - minClues;
@@ -255,6 +259,7 @@ function removeCells(
 
   let removed = 0;
 
+  // ── Phase 1: Greedy pass ──────────────────────────────────────────────────
   for (const [row, col] of shuffledPositions) {
     if (removed >= maxRemovals) break;
 
@@ -275,6 +280,47 @@ function removeCells(
     }
   }
 
-  log(`Pass complete: removed ${removed} cells, ${81 - removed} clues remain`);
+  log(
+    `Greedy pass complete: removed ${removed} cells, ${81 - removed} clues remain`,
+  );
+
+  // ── Phase 2: Cleanup passes ───────────────────────────────────────────────
+  // Earlier decisions may be stale: a clue that was necessary during the
+  // greedy pass might no longer be necessary now that later removals have
+  // eliminated the alternative solution paths it was guarding against.
+  // Re-sweep until convergence (no removals in a full pass).
+  let pass = 0;
+  let cleanupRemoved: number;
+
+  do {
+    pass++;
+    cleanupRemoved = 0;
+
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 9; col++) {
+        if (removed >= maxRemovals) break;
+
+        const value = puzzle[row][col];
+        if (value === 0) continue;
+
+        puzzle[row][col] = 0;
+
+        const solutions = countSolutions(cloneGrid(puzzle));
+
+        if (solutions !== 1) {
+          puzzle[row][col] = value;
+        } else {
+          removed++;
+          cleanupRemoved++;
+          log(`Cleanup pass ${pass}: removed ${value} from (${row}, ${col})`);
+        }
+      }
+    }
+
+    log(
+      `Cleanup pass ${pass}: removed ${cleanupRemoved} cells, ${81 - removed} clues remain`,
+    );
+  } while (cleanupRemoved > 0 && removed < maxRemovals);
+
   return puzzle;
 }

@@ -49,7 +49,13 @@ function useTheme() {
   return { theme, toggle };
 }
 
-const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard", "master"];
+const DIFFICULTIES: Difficulty[] = [
+  "easy",
+  "medium",
+  "hard",
+  "master",
+  "extreme",
+];
 
 function createEmptyGrid(): Grid {
   return Array.from({ length: 9 }, () => Array(9).fill(0));
