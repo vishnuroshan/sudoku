@@ -16,6 +16,7 @@ import {
   Gauge,
   Info,
   X,
+  Pencil,
 } from "lucide-react";
 import {
   Button,
@@ -74,6 +75,15 @@ function createEmptyGrid(): Grid {
 
 function cloneGrid(g: Grid): Grid {
   return g.map((row) => [...row]);
+}
+
+// Notes grid: 9×9 array of number arrays (serializable, each cell holds pencilled candidates)
+type NotesGrid = number[][][];
+
+function createEmptyNotesGrid(): NotesGrid {
+  return Array.from({ length: 9 }, () =>
+    Array.from({ length: 9 }, () => []),
+  );
 }
 
 /* ── IndexedDB Stats ──────────────────────────────────────────────────── */
@@ -182,6 +192,11 @@ function App() {
     "sudoku_difficulty",
     { defaultValue: "medium" },
   );
+  const [notesGrid, setNotesGrid] = useLocalStorageState<NotesGrid>(
+    "sudoku_notes",
+    { defaultValue: createEmptyNotesGrid() },
+  );
+  const [notesMode, setNotesMode] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -213,6 +228,8 @@ function App() {
     setShowSolution(false);
     setSelectedCell(null);
     setUserGrid(createEmptyGrid());
+    setNotesGrid(createEmptyNotesGrid());
+    setNotesMode(false);
     setHasWonCurrent(false);
 
     setTimeout(() => {
@@ -276,7 +293,22 @@ function App() {
     const [r, c] = selectedCell;
     if (isGivenCell(r, c)) return;
 
-    // Compute the next merged grid to detect newly introduced conflicts
+    // ── Notes mode: toggle candidate in this cell's notes, no fill ──
+    if (notesMode) {
+      setNotesGrid((prev) => {
+        const next = prev.map((row) => row.map((cell) => [...cell]));
+        const idx = next[r][c].indexOf(n);
+        if (idx === -1) {
+          next[r][c].push(n);
+        } else {
+          next[r][c].splice(idx, 1);
+        }
+        return next;
+      });
+      return;
+    }
+
+    // ── Fill mode: existing conflict-detection + shake logic (unchanged) ──
     const nextUserGrid = cloneGrid(userGrid);
     nextUserGrid[r][c] = n;
     const nextMerged = cloneGrid(puzzleGrid);
@@ -293,6 +325,24 @@ function App() {
     setUserGrid((prev) => {
       const next = cloneGrid(prev);
       next[r][c] = n;
+      return next;
+    });
+
+    // Auto-remove n from notes in the filled cell and all its peers
+    setNotesGrid((prev) => {
+      const next = prev.map((row) => row.map((cell) => [...cell]));
+      next[r][c] = []; // clear this cell's notes
+      const br = Math.floor(r / 3) * 3;
+      const bc = Math.floor(c / 3) * 3;
+      for (let i = 0; i < 9; i++) {
+        next[r][i] = next[r][i].filter((v) => v !== n);
+        next[i][c] = next[i][c].filter((v) => v !== n);
+      }
+      for (let rr = br; rr < br + 3; rr++) {
+        for (let cc = bc; cc < bc + 3; cc++) {
+          next[rr][cc] = next[rr][cc].filter((v) => v !== n);
+        }
+      }
       return next;
     });
 
@@ -315,6 +365,12 @@ function App() {
     setUserGrid((prev) => {
       const next = cloneGrid(prev);
       next[r][c] = 0;
+      return next;
+    });
+    // Also clear notes for this cell
+    setNotesGrid((prev) => {
+      const next = prev.map((row) => row.map((cell) => [...cell]));
+      next[r][c] = [];
       return next;
     });
   }
@@ -539,28 +595,49 @@ function App() {
                       const isUserEntry = !isGiven && userGrid[r][c] !== 0;
                       const highlight = getCellHighlight(r, c);
                       const hasConflict = conflicts.has(`${r},${c}`);
+                      const cellNotes = notesGrid?.[r]?.[c] ?? [];
+                      const showNotes =
+                        isEmpty && cellNotes.length > 0 && !showSolution;
                       return (
                         <td
                           key={c}
                           onClick={() => handleCellClick(r, c)}
-                          className={`text-center align-middle font-semibold tabular-nums border border-border-strong cursor-pointer select-none transition-colors duration-75
-                          w-10 h-10 text-[1.05rem]
-                          min-[390px]:w-11 min-[390px]:h-11 min-[390px]:text-[1.2rem]
-                          min-[480px]:w-12 min-[480px]:h-12 min-[480px]:text-[1.25rem]
-                          md:w-13.5 md:h-13.5 md:text-[1.35rem]
-                          lg:w-15 lg:h-15 lg:text-2xl
-                          min-[1440px]:w-17 min-[1440px]:h-17 min-[1440px]:text-[1.65rem]
-                          min-[1920px]:w-19 min-[1920px]:h-19 min-[1920px]:text-[1.8rem]
+                          className={`border border-border-strong cursor-pointer select-none transition-colors duration-75
+                          w-10 h-10
+                          min-[390px]:w-11 min-[390px]:h-11
+                          min-[480px]:w-12 min-[480px]:h-12
+                          md:w-13.5 md:h-13.5
+                          lg:w-15 lg:h-15
+                          min-[1440px]:w-17 min-[1440px]:h-17
+                          min-[1920px]:w-19 min-[1920px]:h-19
+                          ${showNotes ? "p-0.5" : "text-center align-middle font-semibold tabular-nums text-[1.05rem] min-[390px]:text-[1.2rem] min-[480px]:text-[1.25rem] md:text-[1.35rem] lg:text-2xl min-[1440px]:text-[1.65rem] min-[1920px]:text-[1.8rem]"}
                           ${c % 3 === 0 ? "border-l-2 border-l-border-strong" : ""}
                           ${r % 3 === 0 ? "border-t-2 border-t-border-strong" : ""}
                           ${c === 8 ? "border-r-2 border-r-border-strong" : ""}
                           ${r === 8 ? "border-b-2 border-b-border-strong" : ""}
                           ${highlight}
                           ${shakingCells.has(`${r},${c}`) ? "animate-shake" : ""}
-                          ${hasConflict && isUserEntry ? "text-error" : isGiven ? "text-clue" : isUserEntry ? "text-solution" : "text-text-tertiary"}
+                          ${!showNotes ? (hasConflict && isUserEntry ? "text-error" : isGiven ? "text-clue" : isUserEntry ? "text-solution" : "text-text-tertiary") : ""}
                         `}
                         >
-                          {isEmpty ? "" : cell}
+                          {showNotes ? (
+                            <div className="grid h-full w-full grid-cols-3">
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                                <span
+                                  key={n}
+                                  className={`flex items-center justify-center font-semibold leading-none tabular-nums
+                                    text-[0.42rem] min-[390px]:text-[0.48rem] min-[480px]:text-[0.52rem] md:text-[0.55rem] lg:text-[0.6rem]
+                                    ${cellNotes.includes(n) ? "text-accent" : "text-transparent"}`}
+                                >
+                                  {n}
+                                </span>
+                              ))}
+                            </div>
+                          ) : isEmpty ? (
+                            ""
+                          ) : (
+                            cell
+                          )}
                         </td>
                       );
                     })}
@@ -569,7 +646,7 @@ function App() {
               </tbody>
             </table>
 
-            {/* ── Tool row: Erase + Undo ─────────────────────────── */}
+            {/* ── Tool row: Erase + Notes ─────────────────────────── */}
             <div className="mt-2 flex w-full gap-1">
               <Button
                 aria-label="Erase"
@@ -583,6 +660,18 @@ function App() {
                 className="flex h-10 w-10 min-[390px]:h-11 min-[390px]:w-11 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
               >
                 <Eraser size={18} />
+              </Button>
+              <Button
+                aria-label={notesMode ? "Notes on" : "Notes off"}
+                onPress={() => setNotesMode((m) => !m)}
+                isDisabled={generating || !puzzleGrid || showSolution}
+                className={`flex h-10 w-10 min-[390px]:h-11 min-[390px]:w-11 cursor-pointer items-center justify-center rounded-md border outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-35
+                  ${notesMode
+                    ? "border-accent bg-accent text-white"
+                    : "border-border-primary bg-elevated text-text-secondary hover:border-border-strong hover:bg-hover active:bg-active"
+                  }`}
+              >
+                <Pencil size={16} />
               </Button>
               {/* <Button
                 aria-label="Undo"
