@@ -11,7 +11,6 @@ import {
   Settings,
   Eraser,
   PartyPopper,
-  // RotateCcw,
   Eye,
   Info,
   X,
@@ -543,8 +542,12 @@ function App() {
     <div className="flex h-dvh flex-col overflow-hidden">
       {/* ── Header ─────────────────────────────────────────────── */}
       <header className="flex w-full items-center justify-between border-b border-border-primary bg-container px-4 py-3 sm:px-6">
-        <h1 className="text-lg font-semibold tracking-tight text-text-primary">
-          Sudoku
+        <h1
+          className="text-2xl font-bold tracking-tight text-text-primary"
+          style={{ fontFamily: "Times New Roman, Times, serif" }}
+        >
+          Sudoku{" "}
+          <span className="text-red-500 text-sm">数独 愛する妻のために</span>
         </h1>
         <div className="flex items-center gap-2">
           <button

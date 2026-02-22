@@ -1,10 +1,16 @@
 # About
 
-A clean, mobile-first Sudoku app built as a learning project and something my wife and I could genuinely use.
+A clean, mobile-first Sudoku app built for my lovely wife ❤️
 
 ## Why this exists
 
-A fun weekend project that I made for my wife. I saw that the Sudoku iOS app my wife used had too many ads, and I wanted to do something cool for her. We eventually collaborated and made this app. Talked a lot about the algo and UX. Talked about the functionalities. Now, I kinda want to make this for everybody. But I want my wife to test this for some time and find the gaps. If you are seeing this, thanks!!. Reach out to me if you have any feedback (constructive only).
+A fun weekend project that I made for my wife. I saw that the Sudoku iOS app my wife used had too many ads, and I wanted to do something cool for her.
+
+We eventually collaborated and made this app. Discussed a lot about the algo, UX and other important features. Now, I kinda want to make this for everybody. But I want my wife to test this for some time and find and fill the gaps and improve before sharing this with everybody.
+
+If you are seeing this, thanks!
+
+Reach out to me if you have any feedback (constructive only).
 
 
 ## How it was built
