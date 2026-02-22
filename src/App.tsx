@@ -20,6 +20,7 @@ import {
   Bug,
   Pause,
   Play,
+  ChartColumnBig,
 } from "lucide-react";
 import {
   Button,
@@ -41,6 +42,7 @@ import {
 
 import aboutMd from "./about.md?raw";
 import algorithmMd from "../ALGORITHM.md?raw";
+import limitationsMd from "./limitations.md?raw";
 
 type Theme = "light" | "dark";
 
@@ -137,6 +139,11 @@ async function incrementWins(difficulty: Difficulty) {
   await tx.done;
 }
 
+async function getAllStats(): Promise<DifficultyStats[]> {
+  const db = await getStatsDB();
+  return db.getAll(STORE_NAME);
+}
+
 /** Returns a Set of "r,c" strings for all cells that have conflicts. */
 function getConflicts(grid: Grid, puzzleGrid: Grid): Set<string> {
   const conflicts = new Set<string>();
@@ -209,6 +216,8 @@ function App() {
   const [generating, setGenerating] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [statsData, setStatsData] = useState<DifficultyStats[]>([]);
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(
     null,
   );
@@ -236,6 +245,13 @@ function App() {
   );
 
   const gridRef = useRef<HTMLTableElement>(null);
+
+  // Load stats whenever the stats dialog opens
+  useEffect(() => {
+    if (statsOpen) {
+      getAllStats().then(setStatsData);
+    }
+  }, [statsOpen]);
 
   // Auto-generate a puzzle on first load if none saved
   const didAutoGenerate = useRef(false);
@@ -533,6 +549,13 @@ function App() {
         </h1>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setStatsOpen(true)}
+            aria-label="Statistics"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover"
+          >
+            <ChartColumnBig size={18} />
+          </button>
+          <button
             onClick={() => setInfoOpen(true)}
             aria-label="About this app"
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover"
@@ -604,7 +627,8 @@ function App() {
 
                   {/* Show Answer */}
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-text-primary">
+                    <span className="text-sm font-medium text-text-primary flex items-center gap-1">
+                      <Bug size={18} />
                       Show Answer
                     </span>
                     <Switch
@@ -897,7 +921,13 @@ function App() {
                   Puzzle Solved!
                 </Heading>
                 <p className="text-sm text-text-secondary">
-                  Congratulations! You completed the puzzle.
+                  Congratulations! You completed the{" "}
+                  <span className="font-medium capitalize">{difficulty}</span>{" "}
+                  puzzle in{" "}
+                  <span className="font-semibold tabular-nums text-text-primary">
+                    {formatTime(elapsedSeconds)}
+                  </span>
+                  .
                 </p>
                 <Button
                   onPress={() => handleGenerate()}
@@ -905,6 +935,110 @@ function App() {
                 >
                   New Puzzle
                 </Button>
+              </div>
+            </Dialog>
+          </Modal>
+        </ModalOverlay>
+
+        {/* ── Stats Dialog ───────────────────────────────────── */}
+        <ModalOverlay
+          isOpen={statsOpen}
+          onOpenChange={setStatsOpen}
+          isDismissable
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm entering:animate-in entering:fade-in exiting:animate-out exiting:fade-out"
+        >
+          <Modal className="mx-4 w-full max-w-sm rounded-xl border border-border-primary bg-container p-6 shadow-xl outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95">
+            <Dialog className="outline-none">
+              <div className="flex flex-col gap-5">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <Heading
+                    slot="title"
+                    className="text-base font-semibold text-text-primary"
+                  >
+                    Statistics
+                  </Heading>
+                  <Button
+                    onPress={() => setStatsOpen(false)}
+                    aria-label="Close"
+                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover"
+                  >
+                    <X size={16} />
+                  </Button>
+                </div>
+
+                {/* Stats table */}
+                {statsData.length === 0 ? (
+                  <p className="text-center text-sm text-text-secondary">
+                    No games played yet.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-4 gap-y-3 text-sm">
+                    {/* Column headers */}
+                    <span className="font-medium text-text-secondary">
+                      Mode
+                    </span>
+                    <span className="text-center font-medium text-text-secondary">
+                      Played
+                    </span>
+                    <span className="text-center font-medium text-text-secondary">
+                      Won
+                    </span>
+                    <span className="text-center font-medium text-text-secondary">
+                      Win %
+                    </span>
+
+                    {/* Divider */}
+                    <div className="col-span-4 border-t border-border-primary" />
+
+                    {/* Rows — sorted by canonical difficulty order */}
+                    {(DIFFICULTIES as Difficulty[])
+                      .map((d) => statsData.find((s) => s.difficulty === d))
+                      .filter((s): s is DifficultyStats => s !== undefined)
+                      .map((s) => {
+                        const pct =
+                          s.played > 0
+                            ? Math.round((s.wins / s.played) * 100)
+                            : 0;
+                        return (
+                          <>
+                            <span
+                              key={`${s.difficulty}-label`}
+                              className={`capitalize font-medium ${
+                                s.difficulty === "easy"
+                                  ? "text-green-600 dark:text-green-400"
+                                  : s.difficulty === "medium"
+                                    ? "text-yellow-500 dark:text-yellow-400"
+                                    : s.difficulty === "hard"
+                                      ? "text-amber-700 dark:text-amber-500"
+                                      : "text-red-700 dark:text-red-500"
+                              }`}
+                            >
+                              {s.difficulty}
+                            </span>
+                            <span
+                              key={`${s.difficulty}-played`}
+                              className="text-center tabular-nums text-text-primary"
+                            >
+                              {s.played}
+                            </span>
+                            <span
+                              key={`${s.difficulty}-wins`}
+                              className="text-center tabular-nums text-text-primary"
+                            >
+                              {s.wins}
+                            </span>
+                            <span
+                              key={`${s.difficulty}-pct`}
+                              className="text-center tabular-nums text-text-primary"
+                            >
+                              {pct}%
+                            </span>
+                          </>
+                        );
+                      })}
+                  </div>
+                )}
               </div>
             </Dialog>
           </Modal>
@@ -954,6 +1088,12 @@ function App() {
                   >
                     Algorithm
                   </Tab>
+                  <Tab
+                    id="limitations"
+                    className="cursor-pointer border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-text-secondary outline-none transition-colors hover:text-text-primary data-selected:border-accent data-selected:text-accent"
+                  >
+                    Limitations
+                  </Tab>
                 </TabList>
 
                 <TabPanel
@@ -972,6 +1112,17 @@ function App() {
                   <div className="prose-custom">
                     <Markdown remarkPlugins={[remarkGfm]}>
                       {algorithmMd}
+                    </Markdown>
+                  </div>
+                </TabPanel>
+
+                <TabPanel
+                  id="limitations"
+                  className="flex-1 overflow-y-auto px-4 py-4 sm:px-6"
+                >
+                  <div className="prose-custom">
+                    <Markdown remarkPlugins={[remarkGfm]}>
+                      {limitationsMd}
                     </Markdown>
                   </div>
                 </TabPanel>

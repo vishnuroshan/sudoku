@@ -4,13 +4,12 @@ A clean, mobile-first Sudoku app built as a learning project and something my wi
 
 ## Why this exists
 
-This started as a way to get better at React, TypeScript, and building something end-to-end. But it quickly turned into a collaborative project my wife helped shape the puzzle generation algorithm and the overall UX design. The goal was to build something polished enough that she'd actually want to use it on her phone instead of downloading yet another ad-filled Sudoku app.
+A fun weekend project that I made for my wife. I saw that the Sudoku iOS app my wife used had too many ads, and I wanted to do something cool for her. We eventually collaborated and made this app. Talked a lot about the algo and UX. Talked about the functionalities. Now, I kinda want to make this for everybody. But I want my wife to test this for some time and find the gaps. If you are seeing this, thanks!!. Reach out to me if you have any feedback (constructive only).
 
-It's been a fun one to work on together.
 
 ## How it was built
 
-Wrote the core puzzle generation algorithm by hand and brainstormed the approach, researched the logic behind Sudoku uniqueness and irreducibility, and iterated from there. Used AI to refine and improve the algorithm further, and for building out the UI/UX. But every decision was planned and intentional. This was not vibe-coded.
+Wrote the core puzzle generation algorithm by hand. Brainstormed the approach with my wife, researched the logic behind Sudoku uniqueness, irreducibility, and iterated from there. Used AI to refine and improve the algorithm further, and for building out the UI/UX. But every decision was planned and intentional. This was not vibe-coded.
 
 ## Tech Stack
 
