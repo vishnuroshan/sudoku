@@ -4,7 +4,7 @@ import { useMediaQuery } from "@uidotdev/usehooks";
 import { openDB } from "idb";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { generatePuzzle, solve, countSolutions } from "./sudoku";
+import { generatePuzzle, /* solve, */ countSolutions } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
 import {
   Sun,
