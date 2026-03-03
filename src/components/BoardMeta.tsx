@@ -1,5 +1,6 @@
 import { Pause, Play } from "lucide-react";
 import type { Difficulty } from "../lib/grid";
+import { DIFFICULTY_COLOR } from "../sudoku";
 
 interface BoardMetaProps {
   difficulty: Difficulty;
@@ -23,15 +24,7 @@ export function BoardMeta({
   return (
     <div className="mb-2 flex w-full items-center justify-between">
       <span
-        className={`capitalize font-medium text-sm ${
-          difficulty === "easy"
-            ? "text-green-600 dark:text-green-400"
-            : difficulty === "medium"
-              ? "text-yellow-500 dark:text-yellow-400"
-              : difficulty === "hard"
-                ? "text-amber-700 dark:text-amber-500"
-                : "text-red-700 dark:text-red-500"
-        }`}
+        className={`capitalize font-medium text-sm ${DIFFICULTY_COLOR[difficulty]}`}
       >
         {difficulty}
       </span>

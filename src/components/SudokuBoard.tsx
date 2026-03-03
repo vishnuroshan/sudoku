@@ -60,7 +60,7 @@ export function SudokuBoard({
                     lg:w-18 lg:h-18
                     min-[1440px]:w-20 min-[1440px]:h-20
                     min-[1920px]:w-22 min-[1920px]:h-22
-                    ${showNotes ? "p-0.5" : "text-center align-middle font-semibold tabular-nums text-[1.3rem] min-[390px]:text-[1.45rem] min-[480px]:text-[1.55rem] md:text-[1.85rem] lg:text-[2.1rem] min-[1440px]:text-[2.3rem] min-[1920px]:text-[2.55rem]"}
+                    ${showNotes ? "p-0.5" : "text-center align-middle font-semibold tabular-nums text-[1.55rem] min-[390px]:text-[1.7rem] min-[480px]:text-[1.85rem] md:text-[1.85rem] lg:text-[2.1rem] min-[1440px]:text-[2.3rem] min-[1920px]:text-[2.55rem]"}
                     ${c % 3 === 0 ? "border-l-[3px] border-l-border-strong" : ""}
                     ${r % 3 === 0 ? "border-t-[3px] border-t-border-strong" : ""}
                     ${c === 8 ? "border-r-[3px] border-r-border-strong" : ""}

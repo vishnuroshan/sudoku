@@ -15,6 +15,15 @@ export const DIFFICULTY_CLUES: Record<Difficulty, { min: number; max: number }> 
   extreme: { min: 17, max: 19 },
 };
 
+// Tailwind colour classes for each difficulty level.
+export const DIFFICULTY_COLOR: Record<Difficulty, string> = {
+  easy: "text-green-600 dark:text-green-400",
+  medium: "text-yellow-500 dark:text-yellow-400",
+  hard: "text-amber-700 dark:text-amber-500",
+  master: "text-red-800 dark:text-red-500",
+  extreme: "text-red-900 dark:text-red-500",
+};
+
 // Log callback — logs generation events to the browser console.
 function log(message: string) {
   console.log(`[sudoku] ${message}`);

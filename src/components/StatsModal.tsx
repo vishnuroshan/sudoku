@@ -9,19 +9,13 @@ import {
 import type { DifficultyStats } from "../lib/stats";
 import { DIFFICULTIES } from "../lib/grid";
 import type { Difficulty } from "../lib/grid";
+import { DIFFICULTY_COLOR } from "../sudoku";
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
-
-const DIFFICULTY_COLOR: Record<Difficulty, string> = {
-  easy: "text-green-600 dark:text-green-400",
-  medium: "text-yellow-500 dark:text-yellow-400",
-  hard: "text-amber-700 dark:text-amber-500",
-  expert: "text-red-700 dark:text-red-500",
-};
 
 interface StatsModalProps {
   statsOpen: boolean;
