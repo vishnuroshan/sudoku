@@ -762,7 +762,7 @@ function App() {
                         <td
                           key={c}
                           onClick={() => handleCellClick(r, c)}
-                          className={`border border-border-strong cursor-pointer select-none transition-colors duration-75
+                          className={`border border-border-strong cursor-pointer select-none transition-colors duration-150
                           w-10 h-10
                           min-[390px]:w-11 min-[390px]:h-11
                           min-[480px]:w-12 min-[480px]:h-12
