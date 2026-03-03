@@ -350,8 +350,9 @@ function App() {
   // Start the timer on the player's first action (fill, note, or erase).
   // No-op if already ticking or if the user has explicitly paused it.
   function startTimerIfIdle() {
-    if (!timerActive && !timerPaused) {
+    if (!timerActive && !hasWonCurrent) {
       setTimerActive(true);
+      setTimerPaused(false);
     }
   }
 
@@ -847,15 +848,16 @@ function App() {
                   (selectedCell &&
                     isGivenCell(selectedCell[0], selectedCell[1]))
                 }
-                className="flex h-10 w-10 min-[390px]:h-11 min-[390px]:w-11 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+                className="flex cursor-pointer items-center gap-1 rounded-md border border-border-primary bg-elevated px-2.5 py-1 text-xs font-medium text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
               >
                 <Eraser size={iconSize} />
+                Clear
               </Button>
               <Button
                 aria-label={notesMode ? "Notes on" : "Notes off"}
                 onPress={() => setNotesMode((m) => !m)}
                 isDisabled={generating || !puzzleGrid || showSolution}
-                className={`flex h-10 w-10 min-[390px]:h-11 min-[390px]:w-11 cursor-pointer items-center justify-center rounded-md border outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-35
+                className={`flex cursor-pointer items-center gap-1 rounded-md border  px-2.5 py-1 text-xs font-medium outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-35
                   ${
                     notesMode
                       ? "border-accent bg-accent text-white"
@@ -863,6 +865,7 @@ function App() {
                   }`}
               >
                 <Pencil size={isMobile ? 20 : 16} />
+                Notes
               </Button>
 
               {/* ── DEV: test buttons ── */}
