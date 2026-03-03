@@ -14,10 +14,12 @@ import { DIFFICULTIES } from "../lib/grid";
 import type { Difficulty } from "../lib/grid";
 import { DIFFICULTY_COLOR } from "../sudoku";
 import { useGame } from "../context/GameContext";
+import { useTheme } from "../hooks/useTheme";
 
 export function LandingPage() {
   const navigate = useNavigate();
   const game = useGame();
+  const { theme } = useTheme();
   const [diffOpen, setDiffOpen] = useState(false);
   const [selectedDiff, setSelectedDiff] = useLocalStorageState<Difficulty>(
     "sudoku_difficulty",
@@ -42,8 +44,16 @@ export function LandingPage() {
     navigate("/game");
   }
 
+  const isDark = theme === "dark";
+  const bgFill = isDark ? "%23151619" : "%23f7f8fa";
+  const bgStroke = isDark ? "%232e3035" : "%23bcbff7";
+  const bgPattern = `url("data:image/svg+xml,<svg id='patternId' width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(1) rotate(60)'><rect x='0' y='0' width='100%25' height='100%25' fill='${bgFill}'/><path d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z' stroke-width='0.5' stroke='${bgStroke}' fill='none'/></pattern></defs><rect width='800%25' height='800%25' transform='translate(-10,0)' fill='url(%23a)'/></svg>")`;
+
   return (
-    <div className="flex h-dvh flex-col items-center justify-center px-4">
+    <div
+      className="flex h-dvh flex-col items-center justify-center px-4"
+      style={{ backgroundImage: bgPattern }}
+    >
       <h1
         className="mb-12 text-7xl font-bold tracking-tight text-text-primary sm:text-8xl"
         style={{ fontFamily: "Times New Roman, Times, serif" }}
@@ -59,6 +69,14 @@ export function LandingPage() {
         >
           <CalendarDays size={16} className="shrink-0 text-text-secondary" />
           <span>Daily Challenge</span>
+          <span className="ml-auto font-mono text-xs text-text-secondary">
+            {new Date().toLocaleDateString("en-GB", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              timeZone: "UTC",
+            })}
+          </span>
         </button>
 
         {/* Continue */}

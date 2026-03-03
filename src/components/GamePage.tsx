@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMediaQuery } from "@uidotdev/usehooks";
+import { Loader2 } from "lucide-react";
 import {
   Button,
   Modal,
@@ -83,6 +84,9 @@ export function GamePage() {
       />
 
       <main className="flex flex-1 min-h-0 flex-col items-center justify-center px-2 py-3 md:py-5">
+        {!game.displayGrid && game.generating && (
+          <Loader2 size={36} className="animate-spin text-accent" />
+        )}
         {game.displayGrid &&
           (() => {
             const isPaused =
@@ -102,19 +106,29 @@ export function GamePage() {
                       isMobile={isMobile}
                       formatTime={game.formatTime}
                     />
-                    <SudokuBoard
-                      displayGrid={game.displayGrid}
-                      userGrid={game.userGrid}
-                      conflicts={game.conflicts}
-                      notesGrid={game.notesGrid}
-                      shakingCells={game.shakingCells}
-                      showSolution={game.showSolution}
-                      isGivenCell={game.isGivenCell}
-                      getCellHighlight={game.getCellHighlight}
-                      handleCellClick={game.handleCellClick}
-                      handleGridKeyDown={game.handleGridKeyDown}
-                      gridRef={game.gridRef}
-                    />
+                    <div className="relative">
+                      <SudokuBoard
+                        displayGrid={game.displayGrid}
+                        userGrid={game.userGrid}
+                        conflicts={game.conflicts}
+                        notesGrid={game.notesGrid}
+                        shakingCells={game.shakingCells}
+                        showSolution={game.showSolution}
+                        isGivenCell={game.isGivenCell}
+                        getCellHighlight={game.getCellHighlight}
+                        handleCellClick={game.handleCellClick}
+                        handleGridKeyDown={game.handleGridKeyDown}
+                        gridRef={game.gridRef}
+                      />
+                      {game.generating && (
+                        <div className="absolute inset-0 flex items-center justify-center rounded-sm bg-container/70 backdrop-blur-[2px]">
+                          <Loader2
+                            size={36}
+                            className="animate-spin text-accent"
+                          />
+                        </div>
+                      )}
+                    </div>
                     <ToolRow
                       generating={game.generating}
                       selectedCell={game.selectedCell}

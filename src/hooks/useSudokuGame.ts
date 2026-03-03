@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import useLocalStorageState from "use-local-storage-state";
-import { generatePuzzle } from "../sudoku";
+import PuzzleWorker from "../workers/puzzleWorker.ts?worker";
 import type { Grid, Difficulty } from "../sudoku";
 import {
   DIFFICULTIES,
@@ -62,6 +62,7 @@ export function useSudokuGame() {
   );
 
   const gridRef = useRef<HTMLTableElement>(null);
+  const workerRef = useRef<Worker | null>(null);
 
   // Build the display grid
   const displayGrid: Grid | null = (() => {
@@ -161,13 +162,20 @@ export function useSudokuGame() {
     setTimerActive(false);
     setHasWonCurrent(false);
 
-    setTimeout(() => {
-      const { solved, puzzle } = generatePuzzle(diff);
-      setSolvedGrid(solved);
-      setPuzzleGrid(puzzle);
+    // Terminate any in-flight generation before starting a new one
+    workerRef.current?.terminate();
+    const worker = new PuzzleWorker();
+    workerRef.current = worker;
+
+    worker.onmessage = (e: MessageEvent<{ solved: Grid; puzzle: Grid }>) => {
+      setSolvedGrid(e.data.solved);
+      setPuzzleGrid(e.data.puzzle);
       setGenerating(false);
       incrementPlayed(diff);
-    }, 50);
+      workerRef.current = null;
+    };
+
+    worker.postMessage({ difficulty: diff });
   }
 
   function enterNumber(n: number) {

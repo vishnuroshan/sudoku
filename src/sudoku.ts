@@ -79,60 +79,97 @@ export function isValid(
  * Returns true if a solution exists (grid is mutated in place).
  */
 export function solve(grid: Grid): boolean {
+  // Find the most constrained empty cell (MRV heuristic)
+  let bestRow = -1,
+    bestCol = -1,
+    bestCount = 10;
   for (let row = 0; row < 9; row++) {
     for (let col = 0; col < 9; col++) {
       if (grid[row][col] !== 0) continue;
-
+      let candidates = 0;
       for (let num = 1; num <= 9; num++) {
-        if (!isValid(grid, row, col, num)) continue;
-        grid[row][col] = num;
-        if (solve(grid)) return true;
-        grid[row][col] = 0; // backtrack
+        if (isValid(grid, row, col, num)) candidates++;
       }
-
-      // No valid number fits → dead end.
-      return false;
+      if (candidates === 0) return false; // dead end
+      if (candidates < bestCount) {
+        bestCount = candidates;
+        bestRow = row;
+        bestCol = col;
+        if (bestCount === 1) break;
+      }
     }
+    if (bestCount === 1) break;
   }
-  // No empty cell left → solved!
-  return true;
+
+  if (bestRow === -1) return true; // no empty cell — solved
+
+  for (let num = 1; num <= 9; num++) {
+    if (!isValid(grid, bestRow, bestCol, num)) continue;
+    grid[bestRow][bestCol] = num;
+    if (solve(grid)) return true;
+    grid[bestRow][bestCol] = 0;
+  }
+  return false;
 }
 
 /**
- * Count the number of solutions a grid has using backtracking.
+ * Count the number of solutions a grid has using backtracking with MRV.
  *
  * We stop early as soon as we find MORE than 1 solution because we only
  * care about uniqueness (exactly 1 solution). Continuing beyond 2 would
  * be wasted work.
+ *
+ * MRV (Minimum Remaining Values): always pick the empty cell with the
+ * fewest valid candidates first. This prunes the search tree dramatically
+ * for sparse grids (master / extreme difficulty).
  */
 export function countSolutions(grid: Grid): number {
   let count = 0;
 
-  function search(): boolean {
+  function mostConstrained(): [number, number] | null {
+    let bestRow = -1,
+      bestCol = -1,
+      bestCount = 10;
     for (let row = 0; row < 9; row++) {
       for (let col = 0; col < 9; col++) {
         if (grid[row][col] !== 0) continue;
-
+        let candidates = 0;
         for (let num = 1; num <= 9; num++) {
-          if (!isValid(grid, row, col, num)) continue;
-          grid[row][col] = num;
-
-          // Recurse. If we already found 2+ solutions, bail out.
-          if (search()) return true;
-
-          grid[row][col] = 0; // backtrack
+          if (isValid(grid, row, col, num)) candidates++;
         }
-
-        // Tried all numbers for this cell, none led to a new solution path
-        // beyond what we already counted. Dead end for this branch.
-        return false;
+        if (candidates === 0) return null; // dead end — no solution here
+        if (candidates < bestCount) {
+          bestCount = candidates;
+          bestRow = row;
+          bestCol = col;
+          if (bestCount === 1) return [bestRow, bestCol]; // optimal
+        }
       }
     }
+    return bestRow === -1 ? null : [bestRow, bestCol];
+  }
 
-    // Reached here → the grid is fully filled → found a solution.
-    count++;
-    // Return true to stop early once we exceed 1 solution.
-    return count > 1;
+  function search(): boolean {
+    const cell = mostConstrained();
+    if (cell === null) {
+      // Check whether the grid is actually full (vs dead-end with 0 candidates)
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+          if (grid[row][col] === 0) return false; // dead end
+        }
+      }
+      count++;
+      return count > 1; // stop early once we exceed 1 solution
+    }
+
+    const [row, col] = cell;
+    for (let num = 1; num <= 9; num++) {
+      if (!isValid(grid, row, col, num)) continue;
+      grid[row][col] = num;
+      if (search()) return true;
+      grid[row][col] = 0;
+    }
+    return false;
   }
 
   search();
@@ -305,9 +342,9 @@ function removeCells(solvedGrid: Grid, difficulty: Difficulty): Grid {
     pass++;
     cleanupRemoved = 0;
 
-    for (let row = 0; row < 9; row++) {
+    outer: for (let row = 0; row < 9; row++) {
       for (let col = 0; col < 9; col++) {
-        if (removed >= maxRemovals) break;
+        if (removed >= maxRemovals) break outer;
 
         const value = puzzle[row][col];
         if (value === 0) continue;
