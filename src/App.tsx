@@ -802,10 +802,10 @@ function App() {
                           min-[1440px]:w-17 min-[1440px]:h-17
                           min-[1920px]:w-19 min-[1920px]:h-19
                           ${showNotes ? "p-0.5" : "text-center align-middle font-semibold tabular-nums text-[1.05rem] min-[390px]:text-[1.2rem] min-[480px]:text-[1.25rem] md:text-[1.35rem] lg:text-2xl min-[1440px]:text-[1.65rem] min-[1920px]:text-[1.8rem]"}
-                          ${c % 3 === 0 ? "border-l-2 border-l-border-strong" : ""}
-                          ${r % 3 === 0 ? "border-t-2 border-t-border-strong" : ""}
-                          ${c === 8 ? "border-r-2 border-r-border-strong" : ""}
-                          ${r === 8 ? "border-b-2 border-b-border-strong" : ""}
+                          ${c % 3 === 0 ? "border-l-[3px] border-l-border-strong" : ""}
+                          ${r % 3 === 0 ? "border-t-[3px] border-t-border-strong" : ""}
+                          ${c === 8 ? "border-r-[3px] border-r-border-strong" : ""}
+                          ${r === 8 ? "border-b-[3px] border-b-border-strong" : ""}
                           ${highlight}
                           ${shakingCells.has(`${r},${c}`) ? "animate-shake" : ""}
                           ${!showNotes ? (hasConflict && isUserEntry ? "text-error" : isGiven ? "text-clue" : isUserEntry ? "text-solution" : "text-text-tertiary") : ""}
