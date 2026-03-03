@@ -12,8 +12,6 @@ import {
   Settings,
   Eraser,
   PartyPopper,
-  Eye,
-
   X,
   Pencil,
   Bug,
@@ -563,6 +561,86 @@ function App() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Settings Popover */}
+          <DialogTrigger isOpen={settingsOpen} onOpenChange={setSettingsOpen}>
+            <Button
+              aria-label="Settings"
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <Settings size={iconSize} />
+            </Button>
+            <Popover
+              placement="bottom end"
+              className="w-72 rounded-lg border border-border-primary bg-container shadow-lg outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95"
+            >
+              <Dialog className="p-4 outline-none">
+                <div className="space-y-4">
+                  {/* Generate Puzzle */}
+                  <button
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      handleGenerate();
+                    }}
+                    disabled={generating}
+                    className="w-full cursor-pointer rounded-md border border-border-primary bg-elevated px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    {generating ? "Generating…" : "Generate New Puzzle"}
+                  </button>
+                  {/* Difficulty */}
+                  <div>
+                    <span className="mb-2 block text-xs font-medium uppercase tracking-wide text-text-secondary">
+                      Difficulty
+                    </span>
+                    <RadioGroup
+                      aria-label="Difficulty"
+                      value={difficulty}
+                      onChange={(val) => {
+                        setSettingsOpen(false);
+                        handleGenerate(val as Difficulty);
+                      }}
+                      className="grid grid-cols-2 gap-1"
+                    >
+                      {DIFFICULTIES.map((d) => (
+                        <Radio
+                          key={d}
+                          value={d}
+                          className="flex-1 cursor-pointer rounded-md border border-border-primary px-3 py-1.5 text-center text-sm font-medium capitalize text-text-primary transition-colors data-selected:border-accent data-selected:bg-accent data-selected:text-white hover:bg-hover"
+                        >
+                          {d}
+                        </Radio>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                  {/* Show Answer */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-text-primary flex items-center gap-1">
+                      <Bug size={iconSize} />
+                      Show Answer
+                    </span>
+                    <Switch
+                      isSelected={showSolution}
+                      onChange={(val) => {
+                        setShowSolution(val);
+                        if (val) pauseTimer();
+                        setSettingsOpen(false);
+                      }}
+                      isDisabled={!puzzleGrid || generating}
+                      className="group flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border border-border-primary bg-active p-0.5 transition-colors data-selected:bg-accent disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      <span className="block h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 group-data-selected:translate-x-4" />
+                    </Switch>
+                  </div>
+                </div>
+              </Dialog>
+            </Popover>
+          </DialogTrigger>
+          <button
+            onClick={() => setStatsOpen(true)}
+            aria-label="Statistics"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <ChartColumnBig size={iconSize} />
+          </button>
           <a
             href="https://www.linkedin.com/in/vishnu-roshan/"
             target="_blank"
@@ -624,176 +702,68 @@ function App() {
         </div>
       </header>
 
-      {/* ── Japanese subtitle ─────────────────────────────────── */}
-      <div className="w-full border-b border-border-primary bg-container py-1 text-center">
-        <span
-          className="text-sm font-bold text-red-500"
-          style={{
-            fontFamily:
-              '"Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", "Noto Serif JP", serif',
-          }}
-        >
-          数独 愛する妻のために
-        </span>
-      </div>
-
       {/* ── Main Content ───────────────────────────────────────── */}
-      <main className="flex flex-1 min-h-0 flex-col items-center justify-center px-2 py-1 md:py-4">
-        {/* Controls */}
-        <div className="mb-2 flex items-center justify-center gap-2">
-          <button
-            onClick={() => handleGenerate()}
-            disabled={generating}
-            className="cursor-pointer rounded-md border border-border-primary bg-elevated px-4 py-2 text-sm font-medium text-text-primary transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
-          >
-            {generating ? "Generating…" : "Generate Puzzle"}
-          </button>
-
-          {/* Settings Popover */}
-          <DialogTrigger isOpen={settingsOpen} onOpenChange={setSettingsOpen}>
-            <Button
-              aria-label="Settings"
-              isDisabled={!puzzleGrid || generating}
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-35"
-            >
-              <Settings size={iconSize} />
-            </Button>
-            <Popover
-              placement="bottom end"
-              className="w-72 rounded-lg border border-border-primary bg-container shadow-lg outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95"
-            >
-              <Dialog className="p-4 outline-none">
-                <div className="space-y-4">
-                  {/* Difficulty */}
-                  <div>
-                    <span className="mb-2 block text-xs font-medium uppercase tracking-wide text-text-secondary">
-                      Difficulty
-                    </span>
-                    <RadioGroup
-                      aria-label="Difficulty"
-                      value={difficulty}
-                      onChange={(val) => {
-                        setSettingsOpen(false);
-                        handleGenerate(val as Difficulty);
-                      }}
-                      className="grid grid-cols-2 gap-1"
-                    >
-                      {DIFFICULTIES.map((d) => (
-                        <Radio
-                          key={d}
-                          value={d}
-                          className="flex-1 cursor-pointer rounded-md border border-border-primary px-3 py-1.5 text-center text-sm font-medium capitalize text-text-primary transition-colors data-selected:border-accent data-selected:bg-accent data-selected:text-white hover:bg-hover"
-                        >
-                          {d}
-                        </Radio>
-                      ))}
-                    </RadioGroup>
-                  </div>
-
-                  {/* Show Answer */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-text-primary flex items-center gap-1">
-                      <Bug size={iconSize} />
-                      Show Answer
-                    </span>
-                    <Switch
-                      isSelected={showSolution}
-                      onChange={(val) => {
-                        setShowSolution(val);
-                        if (val) pauseTimer();
-                        setSettingsOpen(false);
-                      }}
-                      isDisabled={!puzzleGrid || generating}
-                      className="group flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border border-border-primary bg-active p-0.5 transition-colors data-selected:bg-accent disabled:cursor-not-allowed disabled:opacity-35"
-                    >
-                      <span className="block h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 group-data-selected:translate-x-4" />
-                    </Switch>
-                  </div>
-                </div>
-              </Dialog>
-            </Popover>
-          </DialogTrigger>
-          <button
-            onClick={() => setStatsOpen(true)}
-            aria-label="Statistics"
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-35"
-          >
-            <ChartColumnBig size={iconSize} />
-          </button>
-        </div>
-
+      <main className="flex flex-1 min-h-0 flex-col items-center justify-center px-2 py-3 md:py-5">
         {/* Grid + Controls */}
         {displayGrid && (
           <div className="flex flex-col items-center">
-            {/* Board info */}
-            {!generating && (
-              <div className="mb-2 flex w-full items-center justify-between text-sm text-text-secondary">
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`flex items-center gap-1 capitalize font-medium ${
-                      difficulty === "easy"
-                        ? "text-green-600 dark:text-green-400"
-                        : difficulty === "medium"
-                          ? "text-yellow-500 dark:text-yellow-400"
-                          : difficulty === "hard"
-                            ? "text-amber-700 dark:text-amber-500"
-                            : "text-red-700 dark:text-red-500"
-                    }`}
-                  >
-                    {/* <Gauge size={iconSize} /> */}
-                    {difficulty}
-                  </span>
-                  {showSolution && (
-                    <span className="flex items-center gap-1 text-accent">
-                      <Eye size={iconSize} />
-                      Answers shown
-                    </span>
+            {/* Difficulty + Timer row */}
+            <div className="mb-2 flex w-full items-center justify-between">
+              <span
+                className={`capitalize font-medium text-sm ${
+                  difficulty === "easy"
+                    ? "text-green-600 dark:text-green-400"
+                    : difficulty === "medium"
+                      ? "text-yellow-500 dark:text-yellow-400"
+                      : difficulty === "hard"
+                        ? "text-amber-700 dark:text-amber-500"
+                        : "text-red-700 dark:text-red-500"
+                }`}
+              >
+                {difficulty}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="tabular-nums text-sm font-medium text-text-primary">
+                  {formatTime(elapsedSeconds)}
+                </span>
+                <button
+                  onClick={timerActive ? pauseTimer : resumeTimer}
+                  disabled={elapsedSeconds === 0 && !timerActive}
+                  aria-label={timerActive ? "Pause timer" : "Resume timer"}
+                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  {timerActive ? (
+                    <Pause size={isMobile ? 16 : 13} />
+                  ) : (
+                    <Play size={isMobile ? 16 : 13} />
                   )}
-                </div>
-
-                {/* Timer */}
-                <div className="flex items-center gap-1.5">
-                  <span className="tabular-nums font-medium text-text-primary">
-                    {formatTime(elapsedSeconds)}
-                  </span>
-                  <button
-                    onClick={timerActive ? pauseTimer : resumeTimer}
-                    disabled={elapsedSeconds === 0 && !timerActive}
-                    aria-label={timerActive ? "Pause timer" : "Resume timer"}
-                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover disabled:cursor-not-allowed disabled:opacity-35"
-                  >
-                    {timerActive ? (
-                      <Pause size={isMobile ? 16 : 13} />
-                    ) : (
-                      <Play size={isMobile ? 16 : 13} />
-                    )}
-                  </button>
-                </div>
+                </button>
               </div>
-            )}
-            <table
-              ref={gridRef}
-              tabIndex={0}
-              onKeyDown={handleGridKeyDown}
-              className="border-collapse bg-container outline-none"
-            >
-              <tbody>
-                {displayGrid.map((row, r) => (
-                  <tr key={r}>
-                    {row.map((cell, c) => {
-                      const isGiven = isGivenCell(r, c);
-                      const isEmpty = cell === 0;
-                      const isUserEntry = !isGiven && userGrid[r][c] !== 0;
-                      const highlight = getCellHighlight(r, c);
-                      const hasConflict = conflicts.has(`${r},${c}`);
-                      const cellNotes = notesGrid?.[r]?.[c] ?? [];
-                      const showNotes =
-                        isEmpty && cellNotes.length > 0 && !showSolution;
-                      return (
-                        <td
-                          key={c}
-                          onClick={() => handleCellClick(r, c)}
-                          className={`border border-border-strong cursor-pointer select-none transition-colors duration-75
+            </div>
+            <div className="rounded-lg overflow-hidden">
+              <table
+                ref={gridRef}
+                tabIndex={0}
+                onKeyDown={handleGridKeyDown}
+                className="border-collapse bg-container outline-none"
+              >
+                <tbody>
+                  {displayGrid.map((row, r) => (
+                    <tr key={r}>
+                      {row.map((cell, c) => {
+                        const isGiven = isGivenCell(r, c);
+                        const isEmpty = cell === 0;
+                        const isUserEntry = !isGiven && userGrid[r][c] !== 0;
+                        const highlight = getCellHighlight(r, c);
+                        const hasConflict = conflicts.has(`${r},${c}`);
+                        const cellNotes = notesGrid?.[r]?.[c] ?? [];
+                        const showNotes =
+                          isEmpty && cellNotes.length > 0 && !showSolution;
+                        return (
+                          <td
+                            key={c}
+                            onClick={() => handleCellClick(r, c)}
+                            className={`border border-border-strong cursor-pointer select-none transition-colors duration-75
                           w-10 h-10
                           min-[390px]:w-11 min-[390px]:h-11
                           min-[480px]:w-12 min-[480px]:h-12
@@ -810,32 +780,33 @@ function App() {
                           ${shakingCells.has(`${r},${c}`) ? "animate-shake" : ""}
                           ${!showNotes ? (hasConflict && isUserEntry ? "text-error" : isGiven ? "text-clue" : isUserEntry ? "text-solution" : "text-text-tertiary") : ""}
                         `}
-                        >
-                          {showNotes ? (
-                            <div className="grid h-full w-full grid-cols-3">
-                              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-                                <span
-                                  key={n}
-                                  className={`flex items-center justify-center font-semibold leading-none tabular-nums
+                          >
+                            {showNotes ? (
+                              <div className="grid h-full w-full grid-cols-3">
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                                  <span
+                                    key={n}
+                                    className={`flex items-center justify-center font-semibold leading-none tabular-nums
                                     text-[0.42rem] min-[390px]:text-[0.48rem] min-[480px]:text-[0.52rem] md:text-[0.55rem] lg:text-[0.6rem]
                                     ${cellNotes.includes(n) ? "text-accent" : "text-transparent"}`}
-                                >
-                                  {n}
-                                </span>
-                              ))}
-                            </div>
-                          ) : isEmpty ? (
-                            ""
-                          ) : (
-                            cell
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                                  >
+                                    {n}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : isEmpty ? (
+                              ""
+                            ) : (
+                              cell
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {/* ── Tool row: Erase + Notes ─────────────────────────── */}
             <div className="mt-2 flex w-full gap-1">
