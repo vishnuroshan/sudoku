@@ -4,7 +4,7 @@ import { useMediaQuery } from "@uidotdev/usehooks";
 import { openDB } from "idb";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { generatePuzzle, countSolutions } from "./sudoku";
+import { generatePuzzle } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
 import {
   Sun,
@@ -837,33 +837,6 @@ function App() {
               >
                 <Pencil size={isMobile ? 20 : 16} />
                 Notes
-              </Button>
-
-              {/* ── DEV: test buttons ── */}
-
-              <Button
-                aria-label="Check uniqueness"
-                onPress={() => {
-                  if (!puzzleGrid) return;
-                  const clone = puzzleGrid.map((row) => [...row]);
-                  const n = countSolutions(clone);
-                  const ok = n === 1;
-                  setTestResult({
-                    title: "Uniqueness",
-                    ok,
-                    message:
-                      n === 1
-                        ? "The puzzle has exactly one solution."
-                        : n === 0
-                          ? "The puzzle has no valid solution."
-                          : "The puzzle has multiple solutions.",
-                  });
-                }}
-                isDisabled={!puzzleGrid || generating}
-                className="flex cursor-pointer items-center gap-1 rounded-md border border-border-primary bg-elevated px-2.5 py-1 text-xs font-medium text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
-              >
-                <Bug size={iconSize} />
-                Uniqueness
               </Button>
             </div>
 
