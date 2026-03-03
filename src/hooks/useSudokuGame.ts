@@ -29,7 +29,7 @@ export function useSudokuGame() {
   });
   const [difficulty, setDifficulty] = useLocalStorageState<Difficulty>(
     "sudoku_difficulty",
-    { defaultValue: "medium" },
+    { defaultValue: "easy" },
   );
   const [notesGrid, setNotesGrid] = useLocalStorageState<NotesGrid>(
     "sudoku_notes",
@@ -62,18 +62,6 @@ export function useSudokuGame() {
   );
 
   const gridRef = useRef<HTMLTableElement>(null);
-
-  // Auto-generate a puzzle on first load if none saved
-  const didAutoGenerate = useRef(false);
-  useEffect(() => {
-    if (!puzzleGrid && !didAutoGenerate.current) {
-      didAutoGenerate.current = true;
-      const { solved, puzzle } = generatePuzzle("medium");
-      setSolvedGrid(solved);
-      setPuzzleGrid(puzzle);
-      incrementPlayed("medium");
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Build the display grid
   const displayGrid: Grid | null = (() => {

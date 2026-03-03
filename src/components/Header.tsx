@@ -1,4 +1,11 @@
-import { Sun, Moon, Settings, Bug, ChartColumnBig } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  Settings,
+  Bug,
+  ChartColumnBig,
+  ChevronLeft,
+} from "lucide-react";
 import {
   Button,
   DialogTrigger,
@@ -17,6 +24,7 @@ interface HeaderProps {
   iconSize: number;
   theme: Theme;
   toggleTheme: () => void;
+  onBack?: () => void;
   settingsOpen: boolean;
   setSettingsOpen: (open: boolean) => void;
   generating: boolean;
@@ -33,6 +41,7 @@ export function Header({
   iconSize,
   theme,
   toggleTheme,
+  onBack,
   settingsOpen,
   setSettingsOpen,
   generating,
@@ -47,6 +56,15 @@ export function Header({
   return (
     <header className="flex w-full items-center justify-between border-b border-border-primary bg-container px-4 py-2 sm:px-6">
       <div className="flex items-center gap-2">
+        {onBack && (
+          <button
+            onClick={onBack}
+            aria-label="Back to home"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover"
+          >
+            <ChevronLeft size={iconSize} />
+          </button>
+        )}
         <h1
           className="text-2xl font-bold tracking-tight text-text-primary"
           style={{ fontFamily: "Times New Roman, Times, serif" }}
