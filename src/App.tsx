@@ -612,24 +612,26 @@ function App() {
                     </RadioGroup>
                   </div>
                   {/* Show Answer */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-text-primary flex items-center gap-1">
-                      <Bug size={iconSize} />
-                      Show Answer
-                    </span>
-                    <Switch
-                      isSelected={showSolution}
-                      onChange={(val) => {
-                        setShowSolution(val);
-                        if (val) pauseTimer();
-                        setSettingsOpen(false);
-                      }}
-                      isDisabled={!puzzleGrid || generating}
-                      className="group flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border border-border-primary bg-active p-0.5 transition-colors data-selected:bg-accent disabled:cursor-not-allowed disabled:opacity-35"
-                    >
-                      <span className="block h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 group-data-selected:translate-x-4" />
-                    </Switch>
-                  </div>
+                  {import.meta.env.DEV && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-text-primary flex items-center gap-1">
+                        <Bug size={iconSize} />
+                        Show Answer
+                      </span>
+                      <Switch
+                        isSelected={showSolution}
+                        onChange={(val) => {
+                          setShowSolution(val);
+                          if (val) pauseTimer();
+                          setSettingsOpen(false);
+                        }}
+                        isDisabled={!puzzleGrid || generating}
+                        className="group flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border border-border-primary bg-active p-0.5 transition-colors data-selected:bg-accent disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        <span className="block h-4 w-4 rounded-full bg-white shadow transition-transform duration-150 group-data-selected:translate-x-4" />
+                      </Switch>
+                    </div>
+                  )}
                 </div>
               </Dialog>
             </Popover>
