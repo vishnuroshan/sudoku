@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, CalendarDays, Play, Plus } from "lucide-react";
+import {
+  Settings,
+  CalendarDays,
+  Play,
+  Plus,
+  ChartColumnBig,
+  Sun,
+  Moon,
+} from "lucide-react";
 import useLocalStorageState from "use-local-storage-state";
 import {
   Button,
@@ -15,12 +23,17 @@ import type { Difficulty } from "../lib/grid";
 import { DIFFICULTY_COLOR } from "../sudoku";
 import { useGame } from "../context/GameContext";
 import { useTheme } from "../hooks/useTheme";
+import { StatsModal } from "./StatsModal";
+import { getAllStats } from "../lib/stats";
+import type { DifficultyStats } from "../lib/stats";
 
 export function LandingPage() {
   const navigate = useNavigate();
   const game = useGame();
-  const { theme } = useTheme();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [diffOpen, setDiffOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [statsData, setStatsData] = useState<DifficultyStats[]>([]);
   const [selectedDiff, setSelectedDiff] = useLocalStorageState<Difficulty>(
     "sudoku_difficulty",
     { defaultValue: "easy" },
@@ -28,6 +41,10 @@ export function LandingPage() {
 
   const hasActiveGame =
     game.puzzleGrid !== null && !(game.hasWonCurrent as boolean);
+
+  useEffect(() => {
+    if (statsOpen) getAllStats().then(setStatsData);
+  }, [statsOpen]);
 
   function handleContinue() {
     game.resumeTimer();
@@ -51,11 +68,19 @@ export function LandingPage() {
 
   return (
     <div
-      className="flex h-dvh flex-col items-center justify-center px-4"
+      className="relative flex h-dvh flex-col items-center justify-center px-4"
       style={{ backgroundImage: bgPattern }}
     >
+      {/* Theme toggle */}
+      <button
+        onClick={toggleTheme}
+        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        className="absolute top-4 right-4 flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover"
+      >
+        {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+      </button>
       <h1
-        className="mb-12 text-7xl font-bold tracking-tight text-text-primary sm:text-8xl"
+        className="mb-12 text-8xl font-bold tracking-tight text-text-primary sm:text-8xl"
         style={{ fontFamily: "Times New Roman, Times, serif" }}
       >
         Sudoku
@@ -92,6 +117,15 @@ export function LandingPage() {
             </span>
           </button>
         )}
+
+        {/* Stats */}
+        <button
+          onClick={() => setStatsOpen(true)}
+          className="flex w-full cursor-pointer items-center gap-3 rounded-md border border-border-primary bg-elevated px-4 py-3 text-sm font-medium text-text-primary transition-colors hover:border-border-strong hover:bg-hover active:bg-active"
+        >
+          <ChartColumnBig size={16} className="shrink-0 text-text-secondary" />
+          <span>Statistics</span>
+        </button>
 
         {/* New Game with difficulty selector */}
         <div className="flex gap-2">
@@ -146,6 +180,13 @@ export function LandingPage() {
           </DialogTrigger>
         </div>
       </div>
+
+      <StatsModal
+        statsOpen={statsOpen}
+        setStatsOpen={setStatsOpen}
+        statsData={statsData}
+        iconSize={16}
+      />
     </div>
   );
 }

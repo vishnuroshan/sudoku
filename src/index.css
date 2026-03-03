@@ -66,16 +66,16 @@
   --color-clue: #e8eaf0;
   --color-solution: #7aa2f7;
 
-  --color-cell-selected: #2a3a5c;
-  --color-cell-peer: #232630;
-  --color-cell-same-value: #2e3d5a;
+  --color-cell-selected: #1e3a6e;
+  --color-cell-peer: #2a3347;
+  --color-cell-same-value: #1a3560;
   --color-cell-conflict: #3d1f1f;
   --color-error: #f28b82;
   --color-success: #81c995;
 
-  --color-numpad: #c2185b;
-  --color-numpad-hover: #d81b60;
-  --color-numpad-active: #ad1457;
+  --color-numpad: #f06292;
+  --color-numpad-hover: #f48fb1;
+  --color-numpad-active: #ec407a;
 }
 
 @layer base {
