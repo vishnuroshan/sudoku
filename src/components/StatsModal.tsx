@@ -10,6 +10,19 @@ import type { DifficultyStats } from "../lib/stats";
 import { DIFFICULTIES } from "../lib/grid";
 import type { Difficulty } from "../lib/grid";
 
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+const DIFFICULTY_COLOR: Record<Difficulty, string> = {
+  easy: "text-green-600 dark:text-green-400",
+  medium: "text-yellow-500 dark:text-yellow-400",
+  hard: "text-amber-700 dark:text-amber-500",
+  expert: "text-red-700 dark:text-red-500",
+};
+
 interface StatsModalProps {
   statsOpen: boolean;
   setStatsOpen: (open: boolean) => void;
@@ -30,7 +43,7 @@ export function StatsModal({
       isDismissable
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm entering:animate-in entering:fade-in exiting:animate-out exiting:fade-out"
     >
-      <Modal className="mx-4 w-full max-w-sm rounded-xl border border-border-primary bg-container p-6 shadow-xl outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95">
+      <Modal className="mx-4 w-full max-w-md rounded-xl border border-border-primary bg-container p-6 shadow-xl outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95">
         <Dialog className="outline-none">
           <div className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
@@ -54,59 +67,66 @@ export function StatsModal({
                 No games played yet.
               </p>
             ) : (
-              <div className="grid grid-cols-4 gap-y-3 text-sm">
-                <span className="font-medium text-text-secondary">Mode</span>
-                <span className="text-center font-medium text-text-secondary">
-                  Played
-                </span>
-                <span className="text-center font-medium text-text-secondary">
-                  Won
-                </span>
-                <span className="text-center font-medium text-text-secondary">
-                  Win %
-                </span>
-                <div className="col-span-4 border-t border-border-primary" />
+              <div className="grid grid-cols-2 gap-3">
                 {(DIFFICULTIES as Difficulty[])
                   .map((d) => statsData.find((s) => s.difficulty === d))
                   .filter((s): s is DifficultyStats => s !== undefined)
                   .map((s) => {
                     const pct =
                       s.played > 0 ? Math.round((s.wins / s.played) * 100) : 0;
+                    const avgTime =
+                      s.wins > 0
+                        ? Math.round((s.totalTime ?? 0) / s.wins)
+                        : null;
                     return (
-                      <>
+                      <div
+                        key={s.difficulty}
+                        className="flex flex-col gap-2 rounded-lg border border-border-primary bg-elevated p-3"
+                      >
                         <span
-                          key={`${s.difficulty}-label`}
-                          className={`capitalize font-medium ${
-                            s.difficulty === "easy"
-                              ? "text-green-600 dark:text-green-400"
-                              : s.difficulty === "medium"
-                                ? "text-yellow-500 dark:text-yellow-400"
-                                : s.difficulty === "hard"
-                                  ? "text-amber-700 dark:text-amber-500"
-                                  : "text-red-700 dark:text-red-500"
-                          }`}
+                          className={`text-sm font-semibold capitalize ${DIFFICULTY_COLOR[s.difficulty]}`}
                         >
                           {s.difficulty}
                         </span>
-                        <span
-                          key={`${s.difficulty}-played`}
-                          className="text-center tabular-nums text-text-primary"
-                        >
-                          {s.played}
-                        </span>
-                        <span
-                          key={`${s.difficulty}-wins`}
-                          className="text-center tabular-nums text-text-primary"
-                        >
-                          {s.wins}
-                        </span>
-                        <span
-                          key={`${s.difficulty}-pct`}
-                          className="text-center tabular-nums text-text-primary"
-                        >
-                          {pct}%
-                        </span>
-                      </>
+
+                        <div className="grid grid-cols-3 gap-1 text-xs">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-text-secondary">Played</span>
+                            <span className="tabular-nums font-medium text-text-primary">
+                              {s.played}
+                            </span>
+                          </div>
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-text-secondary">Won</span>
+                            <span className="tabular-nums font-medium text-text-primary">
+                              {s.wins}
+                            </span>
+                          </div>
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-text-secondary">Win%</span>
+                            <span className="tabular-nums font-medium text-text-primary">
+                              {pct}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-1 border-t border-border-primary pt-2 text-xs">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-text-secondary">Best</span>
+                            <span className="tabular-nums font-medium text-text-primary">
+                              {s.bestTime != null
+                                ? formatTime(s.bestTime)
+                                : "—"}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-text-secondary">Avg</span>
+                            <span className="tabular-nums font-medium text-text-primary">
+                              {avgTime != null ? formatTime(avgTime) : "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     );
                   })}
               </div>

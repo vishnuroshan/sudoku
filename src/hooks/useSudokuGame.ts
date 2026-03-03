@@ -121,9 +121,16 @@ export function useSudokuGame() {
     if (isWon && !hasWonCurrent) {
       setHasWonCurrent(true);
       setTimerPaused(true);
-      incrementWins(difficulty);
+      incrementWins(difficulty, elapsedSeconds as number);
     }
-  }, [isWon, hasWonCurrent, difficulty, setHasWonCurrent, setTimerPaused]);
+  }, [
+    isWon,
+    hasWonCurrent,
+    difficulty,
+    elapsedSeconds,
+    setHasWonCurrent,
+    setTimerPaused,
+  ]);
 
   function startTimerIfIdle() {
     if (!timerActive && !hasWonCurrent) {

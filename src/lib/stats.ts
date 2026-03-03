@@ -5,6 +5,8 @@ export interface DifficultyStats {
   difficulty: Difficulty;
   wins: number;
   played: number;
+  bestTime?: number;
+  totalTime: number;
 }
 
 const DB_NAME = "sudoku-stats";
@@ -34,15 +36,22 @@ export async function incrementPlayed(difficulty: Difficulty) {
   await tx.done;
 }
 
-export async function incrementWins(difficulty: Difficulty) {
+export async function incrementWins(
+  difficulty: Difficulty,
+  elapsedSeconds: number,
+) {
   const db = await getStatsDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
   const store = tx.objectStore(STORE_NAME);
   const existing: DifficultyStats | undefined = await store.get(difficulty);
+  const prevBest = existing?.bestTime;
   await store.put({
     difficulty,
     wins: (existing?.wins ?? 0) + 1,
     played: existing?.played ?? 0,
+    bestTime:
+      prevBest != null ? Math.min(prevBest, elapsedSeconds) : elapsedSeconds,
+    totalTime: (existing?.totalTime ?? 0) + elapsedSeconds,
   });
   await tx.done;
 }
