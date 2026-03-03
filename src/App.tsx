@@ -4,7 +4,7 @@ import { useMediaQuery } from "@uidotdev/usehooks";
 import { openDB } from "idb";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { generatePuzzle, solve, countSolutions } from "./sudoku";
+import { generatePuzzle, countSolutions } from "./sudoku";
 import type { Grid, Difficulty } from "./sudoku";
 import {
   Sun,
@@ -840,26 +840,7 @@ function App() {
               </Button>
 
               {/* ── DEV: test buttons ── */}
-              <Button
-                aria-label="Validate solvability"
-                onPress={() => {
-                  if (!displayGrid) return;
-                  const clone = displayGrid.map((row) => [...row]);
-                  const ok = solve(clone);
-                  setTestResult({
-                    title: "Validate",
-                    ok,
-                    message: ok
-                      ? "The current board is solvable."
-                      : "The current board has no valid solution.",
-                  });
-                }}
-                isDisabled={!puzzleGrid || generating}
-                className="flex cursor-pointer items-center gap-1 rounded-md border border-border-primary bg-elevated px-2.5 py-1 text-xs font-medium text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
-              >
-                <Bug size={iconSize} />
-                Validate
-              </Button>
+
               <Button
                 aria-label="Check uniqueness"
                 onPress={() => {
