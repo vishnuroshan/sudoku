@@ -13,7 +13,7 @@ import {
   Eraser,
   PartyPopper,
   Eye,
-  Info,
+
   X,
   Pencil,
   Bug,
@@ -545,7 +545,7 @@ function App() {
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       {/* ── Header ─────────────────────────────────────────────── */}
-      <header className="flex w-full items-center justify-between border-b border-border-primary bg-container px-4 py-3 sm:px-6">
+      <header className="flex w-full items-center justify-between border-b border-border-primary bg-container px-4 py-2 sm:px-6">
         <div className="flex items-center gap-2">
           <h1
             className="text-2xl font-bold tracking-tight text-text-primary"
@@ -553,13 +553,13 @@ function App() {
           >
             Sudoku
           </h1>
-          <button
+          {/* <button
             onClick={() => setInfoOpen(true)}
             aria-label="About this app"
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover"
           >
             <Info size={iconSize} />
-          </button>
+          </button> */}
         </div>
 
         <div className="flex items-center gap-2">
@@ -625,7 +625,7 @@ function App() {
       </header>
 
       {/* ── Japanese subtitle ─────────────────────────────────── */}
-      <div className="w-full border-b border-border-primary bg-container py-1.5 text-center">
+      <div className="w-full border-b border-border-primary bg-container py-1 text-center">
         <span
           className="text-sm font-bold text-red-500"
           style={{
@@ -638,9 +638,9 @@ function App() {
       </div>
 
       {/* ── Main Content ───────────────────────────────────────── */}
-      <main className="flex flex-1 min-h-0 flex-col items-center justify-center px-2 py-3 md:py-10">
+      <main className="flex flex-1 min-h-0 flex-col items-center justify-center px-2 py-1 md:py-4">
         {/* Controls */}
-        <div className="mb-4 flex items-center justify-center gap-2">
+        <div className="mb-2 flex items-center justify-center gap-2">
           <button
             onClick={() => handleGenerate()}
             disabled={generating}
@@ -797,11 +797,11 @@ function App() {
                           w-10 h-10
                           min-[390px]:w-11 min-[390px]:h-11
                           min-[480px]:w-12 min-[480px]:h-12
-                          md:w-13.5 md:h-13.5
-                          lg:w-15 lg:h-15
-                          min-[1440px]:w-17 min-[1440px]:h-17
-                          min-[1920px]:w-19 min-[1920px]:h-19
-                          ${showNotes ? "p-0.5" : "text-center align-middle font-semibold tabular-nums text-[1.05rem] min-[390px]:text-[1.2rem] min-[480px]:text-[1.25rem] md:text-[1.35rem] lg:text-2xl min-[1440px]:text-[1.65rem] min-[1920px]:text-[1.8rem]"}
+                          md:w-16 md:h-16
+                          lg:w-18 lg:h-18
+                          min-[1440px]:w-20 min-[1440px]:h-20
+                          min-[1920px]:w-22 min-[1920px]:h-22
+                          ${showNotes ? "p-0.5" : "text-center align-middle font-semibold tabular-nums text-[1.3rem] min-[390px]:text-[1.45rem] min-[480px]:text-[1.55rem] md:text-[1.85rem] lg:text-[2.1rem] min-[1440px]:text-[2.3rem] min-[1920px]:text-[2.55rem]"}
                           ${c % 3 === 0 ? "border-l-[3px] border-l-border-strong" : ""}
                           ${r % 3 === 0 ? "border-t-[3px] border-t-border-strong" : ""}
                           ${c === 8 ? "border-r-[3px] border-r-border-strong" : ""}
@@ -932,10 +932,10 @@ function App() {
                     aria-label={`${n}`}
                     onPress={() => enterNumber(n)}
                     isDisabled={generating || !selectedCell || isComplete}
-                    className="flex flex-1 cursor-pointer items-center justify-center rounded-xl py-3.5 text-2xl font-bold text-numpad tabular-nums outline-none transition-colors
+                    className="flex flex-1 cursor-pointer items-center justify-center rounded-xl py-3.5 text-2xl font-bold text-numpad tabular-nums outline-none transition
                     min-[390px]:py-4 min-[390px]:text-3xl
                     min-[480px]:py-4 min-[480px]:text-3xl
-                    hover:text-numpad-hover active:bg-numpad/10 active:text-numpad-active
+                    hover:text-numpad-hover md:hover:scale-125 active:bg-numpad/10 active:text-numpad-active
                     disabled:cursor-not-allowed disabled:opacity-30"
                   >
                     {n}
