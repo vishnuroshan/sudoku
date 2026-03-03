@@ -740,30 +740,29 @@ function App() {
                 </button>
               </div>
             </div>
-            <div className="rounded-lg overflow-hidden">
-              <table
-                ref={gridRef}
-                tabIndex={0}
-                onKeyDown={handleGridKeyDown}
-                className="border-collapse bg-container outline-none"
-              >
-                <tbody>
-                  {displayGrid.map((row, r) => (
-                    <tr key={r}>
-                      {row.map((cell, c) => {
-                        const isGiven = isGivenCell(r, c);
-                        const isEmpty = cell === 0;
-                        const isUserEntry = !isGiven && userGrid[r][c] !== 0;
-                        const highlight = getCellHighlight(r, c);
-                        const hasConflict = conflicts.has(`${r},${c}`);
-                        const cellNotes = notesGrid?.[r]?.[c] ?? [];
-                        const showNotes =
-                          isEmpty && cellNotes.length > 0 && !showSolution;
-                        return (
-                          <td
-                            key={c}
-                            onClick={() => handleCellClick(r, c)}
-                            className={`border border-border-strong cursor-pointer select-none transition-colors duration-75
+            <table
+              ref={gridRef}
+              tabIndex={0}
+              onKeyDown={handleGridKeyDown}
+              className="border-collapse bg-container outline-none"
+            >
+              <tbody>
+                {displayGrid.map((row, r) => (
+                  <tr key={r}>
+                    {row.map((cell, c) => {
+                      const isGiven = isGivenCell(r, c);
+                      const isEmpty = cell === 0;
+                      const isUserEntry = !isGiven && userGrid[r][c] !== 0;
+                      const highlight = getCellHighlight(r, c);
+                      const hasConflict = conflicts.has(`${r},${c}`);
+                      const cellNotes = notesGrid?.[r]?.[c] ?? [];
+                      const showNotes =
+                        isEmpty && cellNotes.length > 0 && !showSolution;
+                      return (
+                        <td
+                          key={c}
+                          onClick={() => handleCellClick(r, c)}
+                          className={`border border-border-strong cursor-pointer select-none transition-colors duration-75
                           w-10 h-10
                           min-[390px]:w-11 min-[390px]:h-11
                           min-[480px]:w-12 min-[480px]:h-12
@@ -780,33 +779,32 @@ function App() {
                           ${shakingCells.has(`${r},${c}`) ? "animate-shake" : ""}
                           ${!showNotes ? (hasConflict && isUserEntry ? "text-error" : isGiven ? "text-clue" : isUserEntry ? "text-solution" : "text-text-tertiary") : ""}
                         `}
-                          >
-                            {showNotes ? (
-                              <div className="grid h-full w-full grid-cols-3">
-                                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-                                  <span
-                                    key={n}
-                                    className={`flex items-center justify-center font-semibold leading-none tabular-nums
+                        >
+                          {showNotes ? (
+                            <div className="grid h-full w-full grid-cols-3">
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                                <span
+                                  key={n}
+                                  className={`flex items-center justify-center font-semibold leading-none tabular-nums
                                     text-[0.42rem] min-[390px]:text-[0.48rem] min-[480px]:text-[0.52rem] md:text-[0.55rem] lg:text-[0.6rem]
                                     ${cellNotes.includes(n) ? "text-accent" : "text-transparent"}`}
-                                  >
-                                    {n}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : isEmpty ? (
-                              ""
-                            ) : (
-                              cell
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                                >
+                                  {n}
+                                </span>
+                              ))}
+                            </div>
+                          ) : isEmpty ? (
+                            ""
+                          ) : (
+                            cell
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
             {/* ── Tool row: Erase + Notes ─────────────────────────── */}
             <div className="mt-2 flex w-full gap-1">
