@@ -352,6 +352,7 @@ export function useSudokuGame() {
     // Timer
     elapsedSeconds,
     timerActive,
+    timerPaused,
     pauseTimer,
     resumeTimer,
     formatTime,

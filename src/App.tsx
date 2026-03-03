@@ -19,6 +19,7 @@ import { Numpad } from "./components/Numpad";
 import { StatsModal } from "./components/StatsModal";
 import { WinModal } from "./components/WinModal";
 import { InfoModal } from "./components/InfoModal";
+import { PauseModal } from "./components/PauseModal";
 
 function App() {
   const { theme, toggle: toggleTheme } = useTheme();
@@ -65,49 +66,66 @@ function App() {
       />
 
       <main className="flex flex-1 min-h-0 flex-col items-center justify-center px-2 py-3 md:py-5">
-        {game.displayGrid && (
-          <div className="flex flex-col items-center">
-            <BoardMeta
-              difficulty={game.difficulty}
-              elapsedSeconds={game.elapsedSeconds}
-              timerActive={game.timerActive}
-              pauseTimer={game.pauseTimer}
-              resumeTimer={game.resumeTimer}
-              isMobile={isMobile}
-              formatTime={game.formatTime}
-            />
-            <SudokuBoard
-              displayGrid={game.displayGrid}
-              userGrid={game.userGrid}
-              conflicts={game.conflicts}
-              notesGrid={game.notesGrid}
-              shakingCells={game.shakingCells}
-              showSolution={game.showSolution}
-              isGivenCell={game.isGivenCell}
-              getCellHighlight={game.getCellHighlight}
-              handleCellClick={game.handleCellClick}
-              handleGridKeyDown={game.handleGridKeyDown}
-              gridRef={game.gridRef}
-            />
-            <ToolRow
-              generating={game.generating}
-              selectedCell={game.selectedCell}
-              isGivenCell={game.isGivenCell}
-              eraseCell={game.eraseCell}
-              notesMode={game.notesMode}
-              setNotesMode={game.setNotesMode}
-              puzzleGrid={game.puzzleGrid}
-              showSolution={game.showSolution}
-              isMobile={isMobile}
-            />
-            <Numpad
-              displayGrid={game.displayGrid}
-              generating={game.generating}
-              selectedCell={game.selectedCell}
-              enterNumber={game.enterNumber}
-            />
-          </div>
-        )}
+        {game.displayGrid &&
+          (() => {
+            const isPaused =
+              (game.timerPaused as boolean) &&
+              !game.isWon &&
+              game.elapsedSeconds > 0;
+            return (
+              <>
+                {!isPaused && (
+                  <div className="flex flex-col items-center">
+                    <BoardMeta
+                      difficulty={game.difficulty}
+                      elapsedSeconds={game.elapsedSeconds}
+                      timerActive={game.timerActive}
+                      pauseTimer={game.pauseTimer}
+                      resumeTimer={game.resumeTimer}
+                      isMobile={isMobile}
+                      formatTime={game.formatTime}
+                    />
+                    <SudokuBoard
+                      displayGrid={game.displayGrid}
+                      userGrid={game.userGrid}
+                      conflicts={game.conflicts}
+                      notesGrid={game.notesGrid}
+                      shakingCells={game.shakingCells}
+                      showSolution={game.showSolution}
+                      isGivenCell={game.isGivenCell}
+                      getCellHighlight={game.getCellHighlight}
+                      handleCellClick={game.handleCellClick}
+                      handleGridKeyDown={game.handleGridKeyDown}
+                      gridRef={game.gridRef}
+                    />
+                    <ToolRow
+                      generating={game.generating}
+                      selectedCell={game.selectedCell}
+                      isGivenCell={game.isGivenCell}
+                      eraseCell={game.eraseCell}
+                      notesMode={game.notesMode}
+                      setNotesMode={game.setNotesMode}
+                      puzzleGrid={game.puzzleGrid}
+                      showSolution={game.showSolution}
+                      isMobile={isMobile}
+                    />
+                    <Numpad
+                      displayGrid={game.displayGrid}
+                      generating={game.generating}
+                      selectedCell={game.selectedCell}
+                      enterNumber={game.enterNumber}
+                    />
+                  </div>
+                )}
+                <PauseModal
+                  isPaused={isPaused}
+                  elapsedSeconds={game.elapsedSeconds}
+                  formatTime={game.formatTime}
+                  resumeTimer={game.resumeTimer}
+                />
+              </>
+            );
+          })()}
 
         {/* Test Result Dialog (DEV) */}
         <ModalOverlay
