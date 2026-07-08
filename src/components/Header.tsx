@@ -5,6 +5,7 @@ import {
   Bug,
   ChartColumnBig,
   ChevronLeft,
+  Info,
 } from "lucide-react";
 import {
   Button,
@@ -35,6 +36,7 @@ interface HeaderProps {
   setShowSolution: (val: boolean) => void;
   pauseTimer: () => void;
   setStatsOpen: (open: boolean) => void;
+  setInfoOpen: (open: boolean) => void;
 }
 
 export function Header({
@@ -52,6 +54,7 @@ export function Header({
   setShowSolution,
   pauseTimer,
   setStatsOpen,
+  setInfoOpen,
 }: HeaderProps) {
   return (
     <header className="flex w-full items-center justify-between border-b border-border-primary bg-container px-4 py-2 sm:px-6">
@@ -157,6 +160,15 @@ export function Header({
           className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <ChartColumnBig size={iconSize} />
+        </button>
+
+        {/* Info */}
+        <button
+          onClick={() => setInfoOpen(true)}
+          aria-label="About this app"
+          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-border-primary bg-elevated text-text-secondary transition-colors hover:border-border-strong hover:bg-hover outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <Info size={iconSize} />
         </button>
 
         {/* LinkedIn */}

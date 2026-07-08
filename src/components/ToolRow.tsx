@@ -1,4 +1,4 @@
-import { Eraser, Pencil } from "lucide-react";
+import { Eraser, Pencil, Lightbulb, Wand2 } from "lucide-react";
 import { Button } from "react-aria-components";
 import type { Grid } from "../sudoku";
 
@@ -12,6 +12,8 @@ interface ToolRowProps {
   puzzleGrid: Grid | null;
   showSolution: boolean;
   isMobile: boolean;
+  getHint: () => void;
+  autoNotes: () => void;
 }
 
 export function ToolRow({
@@ -24,6 +26,8 @@ export function ToolRow({
   puzzleGrid,
   showSolution,
   isMobile,
+  getHint,
+  autoNotes,
 }: ToolRowProps) {
   const iconSize = isMobile ? 20 : 16;
   return (
@@ -55,6 +59,24 @@ export function ToolRow({
       >
         <Pencil size={iconSize} />
         Notes
+      </Button>
+      <Button
+        aria-label="Hint"
+        onPress={getHint}
+        isDisabled={generating || !puzzleGrid || showSolution}
+        className="flex cursor-pointer items-center gap-1 rounded-md border border-border-primary bg-elevated px-2.5 py-1 text-xs font-medium text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+      >
+        <Lightbulb size={iconSize} />
+        Hint
+      </Button>
+      <Button
+        aria-label="Auto notes"
+        onPress={autoNotes}
+        isDisabled={generating || !puzzleGrid || showSolution}
+        className="flex cursor-pointer items-center gap-1 rounded-md border border-border-primary bg-elevated px-2.5 py-1 text-xs font-medium text-text-secondary outline-none transition-colors hover:border-border-strong hover:bg-hover active:bg-active disabled:cursor-not-allowed disabled:opacity-35"
+      >
+        <Wand2 size={iconSize} />
+        Auto notes
       </Button>
     </div>
   );

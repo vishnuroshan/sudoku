@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { gradePuzzle } from "./ladder.ts";
+import { gradePuzzle, nextStep, describeStep, computeCandidates } from "./ladder.ts";
+import { solveGrid } from "./dlx.ts";
 import type { Grid } from "./types.ts";
 
 function parse(s: string): Grid {
@@ -50,5 +51,48 @@ describe("gradePuzzle", () => {
     const copy = escargot.map((row) => [...row]);
     gradePuzzle(escargot);
     expect(escargot).toEqual(copy);
+  });
+});
+
+describe("nextStep", () => {
+  it("returns a placement that agrees with the true solution", () => {
+    const solution = solveGrid(singlesOnly)!;
+    const step = nextStep(singlesOnly);
+    expect(step).not.toBeNull();
+    expect(step!.place).toBeDefined();
+    const { cell, digit } = step!.place!;
+    expect(digit).toBe(solution[Math.floor(cell / 9)][cell % 9]);
+  });
+
+  it("returns null for a complete grid", () => {
+    const solved = solveGrid(singlesOnly)!;
+    expect(nextStep(solved)).toBeNull();
+  });
+
+  it("describes a step in human terms", () => {
+    const step = nextStep(singlesOnly)!;
+    const text = describeStep(step);
+    expect(text).toMatch(/single: \d goes in R\dC\d/);
+  });
+});
+
+describe("computeCandidates", () => {
+  it("is empty for filled cells and excludes peer digits elsewhere", () => {
+    const solution = solveGrid(singlesOnly)!;
+    const candidates = computeCandidates(singlesOnly);
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (singlesOnly[r][c] !== 0) {
+          expect(candidates[r][c]).toEqual([]);
+          continue;
+        }
+        expect(candidates[r][c]).toContain(solution[r][c]);
+        for (let i = 0; i < 9; i++) {
+          if (singlesOnly[r][i] !== 0) {
+            expect(candidates[r][c]).not.toContain(singlesOnly[r][i]);
+          }
+        }
+      }
+    }
   });
 });

@@ -1,7 +1,8 @@
 import type { Difficulty } from "./engine/types.ts";
 
 export type { Grid, Difficulty } from "./engine/types.ts";
-export type { Grade, TechniqueName, Tier } from "./engine/ladder.ts";
+export type { Grade, TechniqueName, Tier, Step } from "./engine/ladder.ts";
+export { nextStep, describeStep, computeCandidates } from "./engine/ladder.ts";
 export type { GeneratedPuzzle } from "./engine/generate.ts";
 export { generatePuzzle } from "./engine/generate.ts";
 

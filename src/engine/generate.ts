@@ -26,9 +26,13 @@ const CLUE_FLOOR: Record<Difficulty, number> = {
   extreme: 0,
 };
 
-const MAX_ATTEMPTS = 50;
+const MAX_ATTEMPTS = 100;
 
-const CELLS = Array.from({ length: 81 }, (_, i) => i);
+// 180°-rotational pairs (i, 80 - i); the center cell 40 stands alone.
+const SYMMETRIC_PAIRS: number[][] = [
+  ...Array.from({ length: 40 }, (_, i) => [i, 80 - i]),
+  [40],
+];
 
 const cloneGrid = (g: Grid): Grid => g.map((row) => [...row]);
 
@@ -37,45 +41,54 @@ interface Carve {
   grade: Grade;
 }
 
+function removePair(puzzle: Grid, pair: number[]): number[] {
+  const values = pair.map((cell) => puzzle[Math.floor(cell / 9)][cell % 9]);
+  for (const cell of pair) puzzle[Math.floor(cell / 9)][cell % 9] = 0;
+  return values;
+}
+
+function restorePair(puzzle: Grid, pair: number[], values: number[]) {
+  pair.forEach((cell, i) => {
+    puzzle[Math.floor(cell / 9)][cell % 9] = values[i];
+  });
+}
+
 // Both solution count and graded tier are monotone under clue removal, so a
-// removal that fails either check can never succeed later: one shuffled pass
+// pair that fails either check can never succeed later: one shuffled pass
 // is enough, no re-sweeps needed.
 function carveBounded(solved: Grid, target: Tier, floor: number): Carve {
   const puzzle = cloneGrid(solved);
   let grade: Grade = { tier: 1, hardest: "naked-single" };
   let clues = 81;
 
-  for (const cell of shuffle(CELLS)) {
+  for (const pair of shuffle(SYMMETRIC_PAIRS)) {
     if (clues <= floor && grade.tier === target) break;
-    const r = Math.floor(cell / 9);
-    const c = cell % 9;
-    const value = puzzle[r][c];
-    puzzle[r][c] = 0;
+    const values = removePair(puzzle, pair);
 
     if (countSolutions(puzzle) !== 1) {
-      puzzle[r][c] = value;
+      restorePair(puzzle, pair, values);
       continue;
     }
     const next = gradePuzzle(puzzle);
     if (next.tier > target) {
-      puzzle[r][c] = value;
+      restorePair(puzzle, pair, values);
       continue;
     }
     grade = next;
-    clues--;
+    clues -= pair.length;
   }
 
   return { puzzle, grade };
 }
 
-function carveMinimal(solved: Grid): Carve {
+function carveMinimal(solved: Grid, symmetric: boolean): Carve {
   const puzzle = cloneGrid(solved);
-  for (const cell of shuffle(CELLS)) {
-    const r = Math.floor(cell / 9);
-    const c = cell % 9;
-    const value = puzzle[r][c];
-    puzzle[r][c] = 0;
-    if (countSolutions(puzzle) !== 1) puzzle[r][c] = value;
+  const groups = symmetric
+    ? SYMMETRIC_PAIRS
+    : Array.from({ length: 81 }, (_, i) => [i]);
+  for (const pair of shuffle(groups)) {
+    const values = removePair(puzzle, pair);
+    if (countSolutions(puzzle) !== 1) restorePair(puzzle, pair, values);
   }
   return { puzzle, grade: gradePuzzle(puzzle) };
 }
@@ -88,7 +101,7 @@ export function generatePuzzle(difficulty: Difficulty): GeneratedPuzzle {
     const solved = randomSolvedGrid();
     const { puzzle, grade } =
       target === 5
-        ? carveMinimal(solved)
+        ? carveMinimal(solved, true)
         : carveBounded(solved, target, CLUE_FLOOR[difficulty]);
 
     if (grade.tier === target) return { solved, puzzle, grade };

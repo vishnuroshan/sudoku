@@ -25,12 +25,33 @@ export interface Grade {
   hardest: TechniqueName;
 }
 
+export interface Elimination {
+  cell: number;
+  digit: number;
+}
+
+export interface Step {
+  technique: TechniqueName;
+  cells: number[];
+  digits: number[];
+  place?: { cell: number; digit: number };
+  eliminations: Elimination[];
+}
+
 const ALL = 0x1ff;
 const bit = (d: number) => 1 << (d - 1);
 const digitOf = (mask: number) => 32 - Math.clz32(mask);
 
 const POPCOUNT = new Uint8Array(512);
 for (let i = 1; i < 512; i++) POPCOUNT[i] = POPCOUNT[i >> 1] + (i & 1);
+
+function maskDigits(mask: number): number[] {
+  const digits = [];
+  for (let d = 1; d <= 9; d++) {
+    if (mask & bit(d)) digits.push(d);
+  }
+  return digits;
+}
 
 const ROWS: number[][] = [];
 const COLS: number[][] = [];
@@ -98,17 +119,48 @@ function* combos(items: number[], k: number, start = 0, acc: number[] = []): Gen
   }
 }
 
-function nakedSingle(b: Board): boolean {
-  for (let cell = 0; cell < 81; cell++) {
-    if (b.values[cell] === 0 && POPCOUNT[b.cands[cell]] === 1) {
-      place(b, cell, digitOf(b.cands[cell]));
-      return true;
-    }
-  }
-  return false;
+function placeStep(technique: TechniqueName, cell: number, d: number): Step {
+  return {
+    technique,
+    cells: [cell],
+    digits: [d],
+    place: { cell, digit: d },
+    eliminations: [],
+  };
 }
 
-function hiddenSingle(b: Board): boolean {
+function collectFromCells(b: Board, cells: number[], exclude: number[], mask: number): Elimination[] {
+  const out: Elimination[] = [];
+  for (const cell of cells) {
+    if (exclude.includes(cell)) continue;
+    const hit = b.cands[cell] & mask;
+    if (!hit) continue;
+    for (const digit of maskDigits(hit)) out.push({ cell, digit });
+  }
+  return out;
+}
+
+function collectSeenBy(b: Board, watchers: number[], mask: number): Elimination[] {
+  const out: Elimination[] = [];
+  for (let cell = 0; cell < 81; cell++) {
+    if (!(b.cands[cell] & mask)) continue;
+    if (watchers.every((w) => IS_PEER[w * 81 + cell])) {
+      for (const digit of maskDigits(b.cands[cell] & mask)) out.push({ cell, digit });
+    }
+  }
+  return out;
+}
+
+function nakedSingle(b: Board): Step | null {
+  for (let cell = 0; cell < 81; cell++) {
+    if (b.values[cell] === 0 && POPCOUNT[b.cands[cell]] === 1) {
+      return placeStep("naked-single", cell, digitOf(b.cands[cell]));
+    }
+  }
+  return null;
+}
+
+function hiddenSingle(b: Board): Step | null {
   for (const unit of UNITS) {
     for (let d = 1; d <= 9; d++) {
       const m = bit(d);
@@ -124,16 +176,13 @@ function hiddenSingle(b: Board): boolean {
           count++;
         }
       }
-      if (count === 1) {
-        place(b, found, d);
-        return true;
-      }
+      if (count === 1) return placeStep("hidden-single", found, d);
     }
   }
-  return false;
+  return null;
 }
 
-function nakedSet(b: Board, k: number): boolean {
+function nakedSet(b: Board, k: number, technique: TechniqueName): Step | null {
   for (const unit of UNITS) {
     const members = unit.filter(
       (c) => b.values[c] === 0 && POPCOUNT[b.cands[c]] <= k,
@@ -143,28 +192,23 @@ function nakedSet(b: Board, k: number): boolean {
       let union = 0;
       for (const c of set) union |= b.cands[c];
       if (POPCOUNT[union] !== k) continue;
-      let changed = false;
-      for (const c of unit) {
-        if (b.values[c] !== 0 || set.includes(c)) continue;
-        if (b.cands[c] & union) {
-          b.cands[c] &= ~union;
-          changed = true;
-        }
+      const eliminations = collectFromCells(b, unit, set, union);
+      if (eliminations.length > 0) {
+        return { technique, cells: set, digits: maskDigits(union), eliminations };
       }
-      if (changed) return true;
     }
   }
-  return false;
+  return null;
 }
 
-function hiddenSet(b: Board, k: number): boolean {
+function hiddenSet(b: Board, k: number, technique: TechniqueName): Step | null {
   for (const unit of UNITS) {
     const positions = new Array<number>(10).fill(0);
     for (let slot = 0; slot < 9; slot++) {
       const cell = unit[slot];
       if (b.values[cell] !== 0) continue;
       for (let d = 1; d <= 9; d++) {
-        if (b.cands[cell] & bit(d)) positions[d] |= 1 << slot;
+      if (b.cands[cell] & bit(d)) positions[d] |= 1 << slot;
       }
     }
     const digits = [];
@@ -181,34 +225,29 @@ function hiddenSet(b: Board, k: number): boolean {
         digitMask |= bit(d);
       }
       if (POPCOUNT[slotUnion] !== k) continue;
-      let changed = false;
+      const cells: number[] = [];
+      const eliminations: Elimination[] = [];
       for (let slot = 0; slot < 9; slot++) {
         if (!(slotUnion & (1 << slot))) continue;
         const cell = unit[slot];
-        if (b.cands[cell] & ~digitMask) {
-          b.cands[cell] &= digitMask;
-          changed = true;
+        cells.push(cell);
+        for (const digit of maskDigits(b.cands[cell] & ~digitMask)) {
+          eliminations.push({ cell, digit });
         }
       }
-      if (changed) return true;
+      if (eliminations.length > 0) {
+        return { technique, cells, digits: set, eliminations };
+      }
     }
   }
-  return false;
+  return null;
 }
 
-function eliminateFromCells(b: Board, cells: number[], exclude: number[], m: number): boolean {
-  let changed = false;
-  for (const c of cells) {
-    if (exclude.includes(c)) continue;
-    if (b.cands[c] & m) {
-      b.cands[c] &= ~m;
-      changed = true;
-    }
-  }
-  return changed;
+function boxIndex(cell: number): number {
+  return Math.floor(cell / 27) * 3 + Math.floor((cell % 9) / 3);
 }
 
-function lockedCandidates(b: Board): boolean {
+function lockedCandidates(b: Board): Step | null {
   for (let d = 1; d <= 9; d++) {
     const m = bit(d);
     for (const box of BOXES) {
@@ -216,11 +255,17 @@ function lockedCandidates(b: Board): boolean {
       if (spots.length < 2) continue;
       const row = Math.floor(spots[0] / 9);
       if (spots.every((c) => Math.floor(c / 9) === row)) {
-        if (eliminateFromCells(b, ROWS[row], box, m)) return true;
+        const eliminations = collectFromCells(b, ROWS[row], box, m);
+        if (eliminations.length > 0) {
+          return { technique: "locked-candidates", cells: spots, digits: [d], eliminations };
+        }
       }
       const col = spots[0] % 9;
       if (spots.every((c) => c % 9 === col)) {
-        if (eliminateFromCells(b, COLS[col], box, m)) return true;
+        const eliminations = collectFromCells(b, COLS[col], box, m);
+        if (eliminations.length > 0) {
+          return { technique: "locked-candidates", cells: spots, digits: [d], eliminations };
+        }
       }
     }
     for (const line of [...ROWS, ...COLS]) {
@@ -228,27 +273,27 @@ function lockedCandidates(b: Board): boolean {
       if (spots.length < 2) continue;
       const box = boxIndex(spots[0]);
       if (spots.every((c) => boxIndex(c) === box)) {
-        if (eliminateFromCells(b, BOXES[box], line, m)) return true;
+        const eliminations = collectFromCells(b, BOXES[box], line, m);
+        if (eliminations.length > 0) {
+          return { technique: "locked-candidates", cells: spots, digits: [d], eliminations };
+        }
       }
     }
   }
-  return false;
+  return null;
 }
 
-function boxIndex(cell: number): number {
-  return Math.floor(cell / 27) * 3 + Math.floor((cell % 9) / 3);
-}
-
-function basicFish(b: Board, k: number): boolean {
+function basicFish(b: Board, k: number, technique: TechniqueName): Step | null {
   for (let d = 1; d <= 9; d++) {
     const m = bit(d);
     for (const rowBased of [true, false]) {
+      const cellAt = (line: number, cross: number) =>
+        rowBased ? line * 9 + cross : cross * 9 + line;
       const lineMasks: number[] = [];
       for (let line = 0; line < 9; line++) {
         let mask = 0;
         for (let cross = 0; cross < 9; cross++) {
-          const cell = rowBased ? line * 9 + cross : cross * 9 + line;
-          if (b.cands[cell] & m) mask |= 1 << cross;
+          if (b.cands[cellAt(line, cross)] & m) mask |= 1 << cross;
         }
         lineMasks.push(mask);
       }
@@ -262,38 +307,32 @@ function basicFish(b: Board, k: number): boolean {
         let crossUnion = 0;
         for (const line of base) crossUnion |= lineMasks[line];
         if (POPCOUNT[crossUnion] !== k) continue;
-        let changed = false;
+        const eliminations: Elimination[] = [];
         for (let line = 0; line < 9; line++) {
           if (base.includes(line)) continue;
           for (let cross = 0; cross < 9; cross++) {
             if (!(crossUnion & (1 << cross))) continue;
-            const cell = rowBased ? line * 9 + cross : cross * 9 + line;
-            if (b.cands[cell] & m) {
-              b.cands[cell] &= ~m;
-              changed = true;
+            if (b.cands[cellAt(line, cross)] & m) {
+              eliminations.push({ cell: cellAt(line, cross), digit: d });
             }
           }
         }
-        if (changed) return true;
+        if (eliminations.length > 0) {
+          const cells: number[] = [];
+          for (const line of base) {
+            for (let cross = 0; cross < 9; cross++) {
+              if (lineMasks[line] & (1 << cross)) cells.push(cellAt(line, cross));
+            }
+          }
+          return { technique, cells, digits: [d], eliminations };
+        }
       }
     }
   }
-  return false;
+  return null;
 }
 
-function eliminateSeenBy(b: Board, watchers: number[], z: number): boolean {
-  let changed = false;
-  for (let cell = 0; cell < 81; cell++) {
-    if (!(b.cands[cell] & z)) continue;
-    if (watchers.every((w) => IS_PEER[w * 81 + cell])) {
-      b.cands[cell] &= ~z;
-      changed = true;
-    }
-  }
-  return changed;
-}
-
-function xyWing(b: Board): boolean {
+function xyWing(b: Board): Step | null {
   for (let pivot = 0; pivot < 81; pivot++) {
     if (POPCOUNT[b.cands[pivot]] !== 2) continue;
     const pincers = PEERS[pivot].filter(
@@ -306,13 +345,21 @@ function xyWing(b: Board): boolean {
       const z1 = b.cands[p1] & ~shared1;
       const z2 = b.cands[p2] & ~shared2;
       if (z1 !== z2 || z1 & b.cands[pivot]) continue;
-      if (eliminateSeenBy(b, [p1, p2], z1)) return true;
+      const eliminations = collectSeenBy(b, [p1, p2], z1);
+      if (eliminations.length > 0) {
+        return {
+          technique: "xy-wing",
+          cells: [pivot, p1, p2],
+          digits: [digitOf(z1)],
+          eliminations,
+        };
+      }
     }
   }
-  return false;
+  return null;
 }
 
-function xyzWing(b: Board): boolean {
+function xyzWing(b: Board): Step | null {
   for (let pivot = 0; pivot < 81; pivot++) {
     if (POPCOUNT[b.cands[pivot]] !== 3) continue;
     const pincers = PEERS[pivot].filter(
@@ -322,10 +369,18 @@ function xyzWing(b: Board): boolean {
     for (const [p1, p2] of combos(pincers, 2)) {
       const z = b.cands[p1] & b.cands[p2];
       if (POPCOUNT[z] !== 1 || (b.cands[p1] | b.cands[p2]) !== b.cands[pivot]) continue;
-      if (eliminateSeenBy(b, [pivot, p1, p2], z)) return true;
+      const eliminations = collectSeenBy(b, [pivot, p1, p2], z);
+      if (eliminations.length > 0) {
+        return {
+          technique: "xyz-wing",
+          cells: [pivot, p1, p2],
+          digits: [digitOf(z)],
+          eliminations,
+        };
+      }
     }
   }
-  return false;
+  return null;
 }
 
 function conjugateLinks(b: Board, m: number): [number, number][] {
@@ -337,7 +392,7 @@ function conjugateLinks(b: Board, m: number): [number, number][] {
   return links;
 }
 
-function simpleColoring(b: Board): boolean {
+function simpleColoring(b: Board): Step | null {
   for (let d = 1; d <= 9; d++) {
     const m = bit(d);
     const links = conjugateLinks(b, m);
@@ -380,19 +435,17 @@ function simpleColoring(b: Board): boolean {
         for (const sign of [1, -1]) {
           const same = unit.filter((c) => component[c] === cc && color[c] === sign);
           if (same.length >= 2) {
-            let changed = false;
-            for (const cell of cells) {
-              if (color[cell] === sign && b.cands[cell] & m) {
-                b.cands[cell] &= ~m;
-                changed = true;
-              }
+            const eliminations = cells
+              .filter((cell) => color[cell] === sign && b.cands[cell] & m)
+              .map((cell) => ({ cell, digit: d }));
+            if (eliminations.length > 0) {
+              return { technique: "simple-coloring", cells, digits: [d], eliminations };
             }
-            if (changed) return true;
           }
         }
       }
 
-      let changed = false;
+      const eliminations: Elimination[] = [];
       for (let cell = 0; cell < 81; cell++) {
         if (!(b.cands[cell] & m) || component[cell] === cc) continue;
         let seesPlus = false;
@@ -402,18 +455,17 @@ function simpleColoring(b: Board): boolean {
           if (color[other] === 1) seesPlus = true;
           else seesMinus = true;
         }
-        if (seesPlus && seesMinus) {
-          b.cands[cell] &= ~m;
-          changed = true;
-        }
+        if (seesPlus && seesMinus) eliminations.push({ cell, digit: d });
       }
-      if (changed) return true;
+      if (eliminations.length > 0) {
+        return { technique: "simple-coloring", cells, digits: [d], eliminations };
+      }
     }
   }
-  return false;
+  return null;
 }
 
-function wWing(b: Board): boolean {
+function wWing(b: Board): Step | null {
   const bivalues: number[] = [];
   for (let cell = 0; cell < 81; cell++) {
     if (POPCOUNT[b.cands[cell]] === 2) bivalues.push(cell);
@@ -431,54 +483,123 @@ function wWing(b: Board): boolean {
           (IS_PEER[s1 * 81 + c1] && IS_PEER[s2 * 81 + c2]) ||
           (IS_PEER[s1 * 81 + c2] && IS_PEER[s2 * 81 + c1]);
         if (!bridges) continue;
-        if (eliminateSeenBy(b, [c1, c2], other)) return true;
+        const eliminations = collectSeenBy(b, [c1, c2], other);
+        if (eliminations.length > 0) {
+          return {
+            technique: "w-wing",
+            cells: [c1, c2, s1, s2],
+            digits: maskDigits(mask),
+            eliminations,
+          };
+        }
       }
     }
   }
-  return false;
+  return null;
 }
 
 interface Technique {
-  name: TechniqueName;
   tier: Tier;
-  apply: (b: Board) => boolean;
+  find: (b: Board) => Step | null;
 }
 
 const TECHNIQUES: Technique[] = [
-  { name: "naked-single", tier: 1, apply: nakedSingle },
-  { name: "hidden-single", tier: 1, apply: hiddenSingle },
-  { name: "naked-pair", tier: 2, apply: (b) => nakedSet(b, 2) },
-  { name: "hidden-pair", tier: 2, apply: (b) => hiddenSet(b, 2) },
-  { name: "locked-candidates", tier: 2, apply: lockedCandidates },
-  { name: "naked-triple", tier: 3, apply: (b) => nakedSet(b, 3) },
-  { name: "hidden-triple", tier: 3, apply: (b) => hiddenSet(b, 3) },
-  { name: "x-wing", tier: 3, apply: (b) => basicFish(b, 2) },
-  { name: "naked-quad", tier: 3, apply: (b) => nakedSet(b, 4) },
-  { name: "hidden-quad", tier: 3, apply: (b) => hiddenSet(b, 4) },
-  { name: "swordfish", tier: 3, apply: (b) => basicFish(b, 3) },
-  { name: "xy-wing", tier: 3, apply: xyWing },
-  { name: "xyz-wing", tier: 3, apply: xyzWing },
-  { name: "simple-coloring", tier: 4, apply: simpleColoring },
-  { name: "w-wing", tier: 4, apply: wWing },
+  { tier: 1, find: nakedSingle },
+  { tier: 1, find: hiddenSingle },
+  { tier: 2, find: (b) => nakedSet(b, 2, "naked-pair") },
+  { tier: 2, find: (b) => hiddenSet(b, 2, "hidden-pair") },
+  { tier: 2, find: lockedCandidates },
+  { tier: 3, find: (b) => nakedSet(b, 3, "naked-triple") },
+  { tier: 3, find: (b) => hiddenSet(b, 3, "hidden-triple") },
+  { tier: 3, find: (b) => basicFish(b, 2, "x-wing") },
+  { tier: 3, find: (b) => nakedSet(b, 4, "naked-quad") },
+  { tier: 3, find: (b) => hiddenSet(b, 4, "hidden-quad") },
+  { tier: 3, find: (b) => basicFish(b, 3, "swordfish") },
+  { tier: 3, find: xyWing },
+  { tier: 3, find: xyzWing },
+  { tier: 4, find: simpleColoring },
+  { tier: 4, find: wWing },
 ];
+
+function findStep(b: Board): { index: number; step: Step } | null {
+  for (let i = 0; i < TECHNIQUES.length; i++) {
+    const step = TECHNIQUES[i].find(b);
+    if (step) return { index: i, step };
+  }
+  return null;
+}
+
+function applyStep(b: Board, step: Step) {
+  if (step.place) {
+    place(b, step.place.cell, step.place.digit);
+    return;
+  }
+  for (const { cell, digit } of step.eliminations) {
+    b.cands[cell] &= ~bit(digit);
+  }
+}
 
 export function gradePuzzle(puzzle: Grid): Grade {
   const board = createBoard(puzzle);
   let hardest = -1;
+  let hardestName: TechniqueName = "naked-single";
 
   while (!isSolved(board)) {
-    let applied = -1;
-    for (let i = 0; i < TECHNIQUES.length; i++) {
-      if (TECHNIQUES[i].apply(board)) {
-        applied = i;
-        break;
-      }
+    const found = findStep(board);
+    if (!found) return { tier: 5, hardest: "beyond-ladder" };
+    applyStep(board, found.step);
+    if (found.index > hardest) {
+      hardest = found.index;
+      hardestName = found.step.technique;
     }
-    if (applied === -1) return { tier: 5, hardest: "beyond-ladder" };
-    if (applied > hardest) hardest = applied;
   }
 
   if (hardest === -1) return { tier: 1, hardest: "naked-single" };
-  const t = TECHNIQUES[hardest];
-  return { tier: t.tier, hardest: t.name };
+  return { tier: TECHNIQUES[hardest].tier, hardest: hardestName };
+}
+
+export function nextStep(grid: Grid): Step | null {
+  const board = createBoard(grid);
+  if (isSolved(board)) return null;
+  return findStep(board)?.step ?? null;
+}
+
+export function computeCandidates(grid: Grid): number[][][] {
+  const board = createBoard(grid);
+  return Array.from({ length: 9 }, (_, r) =>
+    Array.from({ length: 9 }, (_, c) =>
+      board.values[r * 9 + c] !== 0 ? [] : maskDigits(board.cands[r * 9 + c]),
+    ),
+  );
+}
+
+const cellName = (cell: number) => `R${Math.floor(cell / 9) + 1}C${(cell % 9) + 1}`;
+
+const LABELS: Record<TechniqueName, string> = {
+  "naked-single": "Naked single",
+  "hidden-single": "Hidden single",
+  "naked-pair": "Naked pair",
+  "hidden-pair": "Hidden pair",
+  "locked-candidates": "Locked candidates",
+  "naked-triple": "Naked triple",
+  "hidden-triple": "Hidden triple",
+  "x-wing": "X-Wing",
+  "naked-quad": "Naked quad",
+  "hidden-quad": "Hidden quad",
+  swordfish: "Swordfish",
+  "xy-wing": "XY-Wing",
+  "xyz-wing": "XYZ-Wing",
+  "simple-coloring": "Simple coloring",
+  "w-wing": "W-Wing",
+  "beyond-ladder": "Beyond the ladder",
+};
+
+export function describeStep(step: Step): string {
+  const label = LABELS[step.technique];
+  if (step.place) {
+    return `${label}: ${step.place.digit} goes in ${cellName(step.place.cell)}`;
+  }
+  const digits = step.digits.join("/");
+  const spots = [...new Set(step.eliminations.map((e) => cellName(e.cell)))];
+  return `${label} on ${digits} at ${step.cells.map(cellName).join(", ")} — removes candidates from ${spots.join(", ")}`;
 }

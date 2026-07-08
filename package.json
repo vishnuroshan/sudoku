@@ -12,6 +12,7 @@
     "bench": "vitest bench --run"
   },
   "dependencies": {
+    "@fontsource-variable/space-grotesk": "^5.2.10",
     "@tailwindcss/vite": "^4.2.0",
     "@uidotdev/usehooks": "^2.4.1",
     "idb": "^8.0.3",

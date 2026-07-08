@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import useLocalStorageState from "use-local-storage-state";
 import PuzzleWorker from "../workers/puzzleWorker.ts?worker";
 import type { Grid, Difficulty, GeneratedPuzzle } from "../sudoku";
+import { nextStep, describeStep, computeCandidates } from "../sudoku";
 import {
   DIFFICULTIES,
   createEmptyGrid,
@@ -85,6 +86,9 @@ export function useSudokuGame() {
       : new Set<string>();
 
   const [shakingCells, setShakingCells] = useState<Set<string>>(new Set());
+  const [hint, setHint] = useState<{ cells: Set<string>; message: string } | null>(
+    null,
+  );
 
   const isWon = (() => {
     if (!displayGrid || !solvedGrid || showSolution) return false;
@@ -148,6 +152,60 @@ export function useSudokuGame() {
     return puzzleGrid !== null && puzzleGrid[r][c] !== 0;
   }
 
+  function getHint() {
+    if (!puzzleGrid || !solvedGrid || !displayGrid) return;
+    if (showSolution || generating || isWon) return;
+    startTimerIfIdle();
+
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (puzzleGrid[r][c] !== 0 || userGrid[r][c] === 0) continue;
+        if (userGrid[r][c] !== solvedGrid[r][c]) {
+          setHint({
+            cells: new Set([`${r},${c}`]),
+            message: `There's a mistake at R${r + 1}C${c + 1}`,
+          });
+          return;
+        }
+      }
+    }
+
+    const step = nextStep(displayGrid);
+    if (!step) {
+      setHint({
+        cells: new Set(),
+        message: "No logical step found — this needs chains or trial and error",
+      });
+      return;
+    }
+
+    // Elimination hints reference candidate patterns; make them visible by
+    // filling true pencil marks for the pattern cells.
+    if (!step.place) {
+      const candidates = computeCandidates(displayGrid);
+      setNotesGrid((prev) => {
+        const next = prev.map((row) => row.map((cell) => [...cell]));
+        for (const cell of step.cells) {
+          const r = Math.floor(cell / 9);
+          const c = cell % 9;
+          next[r][c] = candidates[r][c];
+        }
+        return next;
+      });
+    }
+
+    setHint({
+      cells: new Set(step.cells.map((cell) => `${Math.floor(cell / 9)},${cell % 9}`)),
+      message: describeStep(step),
+    });
+  }
+
+  function autoNotes() {
+    if (!displayGrid || !puzzleGrid || generating || showSolution) return;
+    startTimerIfIdle();
+    setNotesGrid(computeCandidates(displayGrid));
+  }
+
   function handleGenerate(overrideDifficulty?: Difficulty) {
     const diff = overrideDifficulty ?? difficulty;
     if (overrideDifficulty) setDifficulty(overrideDifficulty);
@@ -161,6 +219,7 @@ export function useSudokuGame() {
     setTimerPaused(false);
     setTimerActive(false);
     setHasWonCurrent(false);
+    setHint(null);
 
     // Terminate any in-flight generation before starting a new one
     workerRef.current?.terminate();
@@ -182,6 +241,7 @@ export function useSudokuGame() {
     if (!selectedCell || !puzzleGrid) return;
     const [r, c] = selectedCell;
     if (isGivenCell(r, c)) return;
+    setHint(null);
 
     if (notesMode) {
       startTimerIfIdle();
@@ -251,6 +311,7 @@ export function useSudokuGame() {
     if (!selectedCell || !puzzleGrid) return;
     const [r, c] = selectedCell;
     if (isGivenCell(r, c)) return;
+    setHint(null);
     startTimerIfIdle();
     setUserGrid((prev) => {
       const next = cloneGrid(prev);
@@ -310,6 +371,7 @@ export function useSudokuGame() {
   }
 
   function getCellHighlight(r: number, c: number): string {
+    if (hint?.cells.has(`${r},${c}`)) return "bg-cell-hint";
     if (!selectedCell || !displayGrid) return "";
     const [sr, sc] = selectedCell;
     const isConflict = conflicts.has(`${r},${c}`);
@@ -352,6 +414,9 @@ export function useSudokuGame() {
     selectedCell,
     setSelectedCell,
     hasWonCurrent,
+    hint,
+    getHint,
+    autoNotes,
     // Timer
     elapsedSeconds,
     timerActive,

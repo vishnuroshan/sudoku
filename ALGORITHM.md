@@ -115,9 +115,11 @@ grade = hardest technique used
 
 Always retrying from the cheapest technique matters: humans don't use a Swordfish when a naked single is available, and grading must mirror that or it would overrate nearly everything.
 
+The same step-finder powers the in-game hint button: given the current board, it returns the cheapest applicable technique with the cells involved and what it concludes — the hint is never "here's the answer," it's the next logical deduction. When a hint references a candidate pattern, the true pencil marks for the pattern cells are filled in automatically so the deduction is visible; the auto-notes tool does the same for the whole board.
+
 ## Grade-Targeted Carving
 
-Difficulty is enforced *during* carving, not checked after. Cells are visited in random order and each removal must pass two tests:
+Difficulty is enforced *during* carving, not checked after. Cells are removed in 180°-rotationally symmetric pairs — the pattern convention of professionally set Sudoku — visited in random order, and each removal must pass two tests:
 
 1. **Uniqueness** — the exact-cover counter still finds exactly one solution.
 2. **Grade bound** — the ladder still solves the puzzle using only techniques at or below the target tier.

@@ -1,3 +1,4 @@
+@import "@fontsource-variable/space-grotesk";
 @import "tailwindcss";
 
 /*
@@ -30,12 +31,15 @@
   --color-cell-peer: #e8ecf4;
   --color-cell-same-value: #c8d8f0;
   --color-cell-conflict: #fde8e8;
+  --color-cell-hint: #fdf0c2;
   --color-error: #d93025;
   --color-success: #188038;
 
-  --color-numpad: #b5275f;
-  --color-numpad-hover: #c4306b;
-  --color-numpad-active: #9e2054;
+  --color-numpad: #365fc9;
+  --color-numpad-hover: #4170db;
+  --color-numpad-active: #2b4da3;
+
+  --font-digit: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
 
   --animate-shake: shake 0.35s ease-in-out;
 }
@@ -70,12 +74,34 @@
   --color-cell-peer: #2a3347;
   --color-cell-same-value: #1a3560;
   --color-cell-conflict: #3d1f1f;
+  --color-cell-hint: #4a3d14;
   --color-error: #f28b82;
   --color-success: #81c995;
 
-  --color-numpad: #f06292;
-  --color-numpad-hover: #f48fb1;
-  --color-numpad-active: #ec407a;
+  --color-numpad: #7aa2f7;
+  --color-numpad-hover: #93b4f9;
+  --color-numpad-active: #5d8bf4;
+}
+
+.game-zone {
+  --board-size: min(94dvw, 100dvh - 16.5rem, 40rem);
+}
+
+.board-shell {
+  width: var(--board-size);
+  height: var(--board-size);
+}
+
+.board-shell td {
+  font-size: calc(var(--board-size) / 14.5);
+}
+
+.board-shell .note-digit {
+  font-size: calc(var(--board-size) / 42);
+}
+
+.controls-zone {
+  width: var(--board-size);
 }
 
 @layer base {

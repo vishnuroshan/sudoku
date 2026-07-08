@@ -81,6 +81,7 @@ export function GamePage() {
         setShowSolution={game.setShowSolution}
         pauseTimer={game.pauseTimer}
         setStatsOpen={setStatsOpen}
+        setInfoOpen={setInfoOpen}
       />
 
       <main className="flex flex-1 min-h-0 flex-col items-center justify-center px-2 py-3 md:py-5">
@@ -139,7 +140,14 @@ export function GamePage() {
                       puzzleGrid={game.puzzleGrid}
                       showSolution={game.showSolution}
                       isMobile={isMobile}
+                      getHint={game.getHint}
+                      autoNotes={game.autoNotes}
                     />
+                    {game.hint && (
+                      <p className="mt-2 w-full rounded-md border border-border-primary bg-elevated px-3 py-2 text-xs text-text-secondary">
+                        {game.hint.message}
+                      </p>
+                    )}
                     <Numpad
                       displayGrid={game.displayGrid}
                       generating={game.generating}

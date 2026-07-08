@@ -69,19 +69,31 @@ describe.each(DIFFICULTIES)("generatePuzzle(%s)", (difficulty, targetTier) => {
       expect(clueCount(puzzle)).toBeGreaterThanOrEqual(17);
     }
   });
+
+  it("has 180° rotational symmetry", () => {
+    for (const { puzzle } of runs) {
+      for (let cell = 0; cell < 81; cell++) {
+        const twin = 80 - cell;
+        expect(puzzle[Math.floor(cell / 9)][cell % 9] !== 0).toBe(
+          puzzle[Math.floor(twin / 9)][twin % 9] !== 0,
+        );
+      }
+    }
+  });
 });
 
 describe("extreme puzzles", () => {
-  it("are minimal: removing any clue breaks uniqueness", () => {
+  it("are pair-minimal: removing any symmetric clue pair breaks uniqueness", () => {
     const { puzzle } = generatePuzzle("extreme");
-    for (let r = 0; r < 9; r++) {
-      for (let c = 0; c < 9; c++) {
-        if (puzzle[r][c] === 0) continue;
-        const value = puzzle[r][c];
-        puzzle[r][c] = 0;
-        expect(countSolutions(puzzle)).toBeGreaterThan(1);
-        puzzle[r][c] = value;
-      }
+    for (let i = 0; i <= 40; i++) {
+      const cells = i === 40 ? [40] : [i, 80 - i];
+      const values = cells.map((cell) => puzzle[Math.floor(cell / 9)][cell % 9]);
+      if (values.every((v) => v === 0)) continue;
+      for (const cell of cells) puzzle[Math.floor(cell / 9)][cell % 9] = 0;
+      expect(countSolutions(puzzle)).toBeGreaterThan(1);
+      cells.forEach((cell, j) => {
+        puzzle[Math.floor(cell / 9)][cell % 9] = values[j];
+      });
     }
   });
 });
