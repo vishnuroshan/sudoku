@@ -29,4 +29,4 @@ Wrote the core puzzle generation algorithm by hand. Brainstormed the approach wi
 | Accessible UI     | React Aria Components                                           |
 | Local Storage     | use-local-storage-state                                         |
 | Stats Storage     | IndexedDB (via idb)                                             |
-| Puzzle Generation | Custom backtracking solver with greedy removal + cleanup passes |
+| Puzzle Generation | Dancing Links (exact cover) solver + human-technique difficulty grading |

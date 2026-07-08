@@ -54,12 +54,12 @@ export function InfoModal({ infoOpen, setInfoOpen, iconSize }: InfoModalProps) {
               aria-label="Info sections"
               className="flex shrink-0 border-b border-border-primary px-4 sm:px-6"
             >
-              <Tab
+              {/* <Tab
                 id="about"
                 className="cursor-pointer border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-text-secondary outline-none transition-colors hover:text-text-primary data-selected:border-accent data-selected:text-accent"
               >
                 About
-              </Tab>
+              </Tab> */}
               <Tab
                 id="algorithm"
                 className="cursor-pointer border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-text-secondary outline-none transition-colors hover:text-text-primary data-selected:border-accent data-selected:text-accent"

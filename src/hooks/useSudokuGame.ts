@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import useLocalStorageState from "use-local-storage-state";
 import PuzzleWorker from "../workers/puzzleWorker.ts?worker";
-import type { Grid, Difficulty } from "../sudoku";
+import type { Grid, Difficulty, GeneratedPuzzle } from "../sudoku";
 import {
   DIFFICULTIES,
   createEmptyGrid,
@@ -167,7 +167,7 @@ export function useSudokuGame() {
     const worker = new PuzzleWorker();
     workerRef.current = worker;
 
-    worker.onmessage = (e: MessageEvent<{ solved: Grid; puzzle: Grid }>) => {
+    worker.onmessage = (e: MessageEvent<GeneratedPuzzle>) => {
       setSolvedGrid(e.data.solved);
       setPuzzleGrid(e.data.puzzle);
       setGenerating(false);
